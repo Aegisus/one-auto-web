@@ -1,20 +1,19 @@
 "use client";
 import { useState, useMemo } from "react";
 import { Listbox, ListboxItem } from "@nextui-org/listbox";
+import { useSelectedKeysStore } from "../../config/store";
 
-const items = [
-  {
-    key: "CQT_Laser_driver_QO_024",
-    label: "Laser_driver",
-  },
-  {
-    key: "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
-    label: "VOA_Driver",
-  },
-];
+type ItemListType = {
+  key: string;
+  value: string;
+}[];
 
-export default function ListBox() {
-  const [selectedKeys, setSelectedKeys] = useState(new Set(["text"]));
+export default function ListBox({ items }: { items: ItemListType }) {
+  // const [selectedKeys, setSelectedKeys] = useState(new Set([""]));
+  const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
+  const setSelectedKeys = useSelectedKeysStore(
+    (state) => state.setSelectedKeys
+  );
 
   const selectedValue = useMemo(
     () => Array.from(selectedKeys).join(", "),
@@ -44,7 +43,7 @@ export default function ListBox() {
               //   color={item.key === "delete" ? "danger" : "default"}
               //   className={item.key === "delete" ? "text-danger" : ""}
             >
-              {item.label}
+              {item.value}
             </ListboxItem>
           )}
         </Listbox>

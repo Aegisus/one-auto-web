@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createEventSource } from "../server/fetch"; // Adjust the import path as necessary
-import DeviceCard from "../../components/devicecard";
+import DeviceCard from "../../components/comport/devicecard";
 
 type Device = {
   com_port: string;

@@ -1,15 +1,25 @@
 "use client";
-import { useEffect, useState } from "react";
-import { createEventSource } from "../server/fetch"; // Adjust the import path as necessary
-import ListBox from "../../components/listbox";
-import InputArea from "../../components/input";
+// import { useEffect, useState } from "react";
+import ListBox from "../../components/commands/listbox";
+import InputArea from "../../components/commands/input";
+
+const deviceList = [
+  {
+    key: "CQT_Laser_driver_QO_024",
+    value: "Laser_driver",
+  },
+  {
+    key: "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
+    value: "VOA_Driver",
+  },
+];
 
 const DeviceCommands = () => {
   //   const [data, setData] = useState<Record<string, Device> | null>(null);
 
   return (
     <div className="flex gap-x-5">
-      <ListBox />
+      <ListBox items={deviceList} />
       <InputArea />
     </div>
   );
