@@ -1,46 +1,26 @@
 "use client";
-import { useEffect, useState } from "react";
-import { createEventSource } from "../server/fetch"; // Adjust the import path as necessary
-import DeviceCard from "../../components/comport/devicecard";
-
-type Device = {
-  com_port: string;
-  ID_MODEL: string;
-  ID_SERIAL: string;
-  ID_FROM_DATABASE: string;
-};
+import { useEffect } from "react";
+import DeviceCard from "@/components/comport/devicecard";
+import { getDevices, type DeviceType } from "@/stores/useFlaskAPIStore";
 
 const Comport = () => {
-  const [data, setData] = useState<Record<string, Device> | null>(null);
+  const { devices, connectToSSE } = getDevices();
 
   useEffect(() => {
-    const eventSource = createEventSource(
-      (rawData) => {
-        try {
-          const parsedData = JSON.parse(rawData);
-          setData(parsedData);
-          console.log("Parsed Data:", JSON.stringify(parsedData, null, 2));
-        } catch (error) {
-          console.error("Error parsing JSON:", error);
-        }
-      },
-      (error) => {
-        console.error("Error fetching data:", error);
-      }
-    );
+    connectToSSE();
+  }, [connectToSSE]);
 
-    return () => {
-      eventSource.close();
-    };
-  }, []);
+  // useEffect(() => {
+  //   console.log(devices);
+  // }, [devices]);
 
   return (
     <div>
       <h1>Connected Devices</h1>
-      {data ? (
-        Object.keys(data).map((key) => (
-          <div key={key} className="mt-3">
-            <DeviceCard device={data[key]} />
+      {Object.keys(devices).length > 0 ? (
+        Object.values(devices).map((device: DeviceType) => (
+          <div key={device.ID_SERIAL} className="mt-3">
+            <DeviceCard device={device} />
           </div>
         ))
       ) : (

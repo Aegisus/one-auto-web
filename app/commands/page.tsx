@@ -2,6 +2,8 @@
 // import { useEffect, useState } from "react";
 import ListBox from "../../components/commands/listbox";
 import InputArea from "../../components/commands/input";
+import { Button, ButtonGroup } from "@nextui-org/button";
+import { runScript } from "@/app/api/flaskAPI/commands/get/route";
 
 const deviceList = [
   {
@@ -14,15 +16,22 @@ const deviceList = [
   },
 ];
 
-const DeviceCommands = () => {
+export default function DeviceCommands() {
   //   const [data, setData] = useState<Record<string, Device> | null>(null);
+  const handleRunScript = async () => {
+    try {
+      const result = await runScript();
+      console.log(result); // You can now use the result
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   return (
     <div className="flex gap-x-5">
       <ListBox items={deviceList} />
       <InputArea />
+      <Button onClick={handleRunScript}>Button</Button>
     </div>
   );
-};
-
-export default DeviceCommands;
+}

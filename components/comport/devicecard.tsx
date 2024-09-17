@@ -1,15 +1,9 @@
 // import Image from "next/image";
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Divider } from "@nextui-org/divider";
+import type { DeviceType } from "@/stores/useFlaskAPIStore";
 
-type Device = {
-  com_port: string;
-  ID_MODEL: string;
-  ID_SERIAL: string;
-  ID_FROM_DATABASE: string;
-};
-
-export default function DeviceCard({ device }: { device: Device }) {
+export default function DeviceCard({ device }: { device: DeviceType }) {
   // console.log("Device Data:", JSON.stringify(device, null, 2));
 
   return (

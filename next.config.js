@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  env: {
+    FLASK_API_PORT: process.env.FLASK_API_PORT,
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
