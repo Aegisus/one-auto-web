@@ -1,7 +1,20 @@
 import { env } from "@/env.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
-import { z } from "zod";
+
+// export async function GET(req: NextRequest) {
+//   const url = "http://localhost:5000/pyvisa";
+
+//   try {
+//     const response = await axios.get(url);
+//     return NextResponse.json(response.data);
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: "Failed to fetch data" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 export async function GET(req: NextRequest) {
   const headers = new Headers();
@@ -20,7 +33,7 @@ export async function GET(req: NextRequest) {
 
       try {
         const response = await axios.get(
-          `${env.NEXT_PUBLIC_APP_URL}:${env.FLASK_API_PORT}/comport`,
+          `${env.NEXT_PUBLIC_APP_URL}:${env.FLASK_API_PORT}/pyvisa`,
           {
             responseType: "stream",
           }

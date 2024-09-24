@@ -10,7 +10,7 @@ export const siteConfig = {
     },
     {
       label: "Connect Device",
-      href: "/comport",
+      href: "/deviceConnect",
     },
     {
       label: "Device Commands",
