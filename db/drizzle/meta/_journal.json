@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1727334993815,
+      "tag": "0000_lively_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1727342287346,
+      "tag": "0001_burly_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1727773250282,
+      "tag": "0002_smiling_clint_barton",
+      "breakpoints": true
+    }
+  ]
+}

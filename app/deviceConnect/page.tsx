@@ -1,53 +1,48 @@
 "use client";
 import { useEffect } from "react";
 import DeviceCard from "@/components/card";
-import {
-  getDevices,
-  type ComportDeviceType,
-  type PyvisaDeviceType,
-} from "@/stores/useFlaskAPIStore";
+import { getDevices } from "@/stores/useFlaskAPIStore";
+import { Button } from "@nextui-org/button";
+
+// Type guards
+function isComportDevice(device: any): device is {
+  com_port: string;
+  ID_MODEL: string;
+  ID_SERIAL: string;
+  ID_FROM_DATABASE: string;
+} {
+  return "ID_SERIAL" in device;
+}
 
 const Comport = () => {
-  const {
-    comportDevices,
-    connectComportToSSE,
-    pyvisaDevices,
-    connectPyvisaToSSE,
-  } = getDevices();
+  const { devices, connectDeviceToSSE } = getDevices();
 
   useEffect(() => {
-    connectComportToSSE();
-    connectPyvisaToSSE();
-  }, [connectComportToSSE, connectPyvisaToSSE]);
-
-  const allDevices: Record<string, ComportDeviceType | PyvisaDeviceType> = {
-    ...comportDevices,
-    ...pyvisaDevices,
-  };
+    const disconnect = connectDeviceToSSE();
+    return () => {
+      disconnect();
+    };
+  }, [connectDeviceToSSE]);
 
   // useEffect(() => {
-  //   console.log(allDevices);
-  // }, [allDevices]);
+  //   console.log(devices);
+  // }, [devices]);
 
   return (
-    <div>
+    <div className="max-w-7xl">
       <h1>Connected Devices</h1>
-      {Object.keys(allDevices).length > 0 ? (
-        Object.values(allDevices).map(
-          (device: ComportDeviceType | PyvisaDeviceType) => {
-            return (
-              <div
-                key={"IDN" in device ? device.IDN : device.ID_SERIAL}
-                className="mt-3"
-              >
-                <DeviceCard
-                  data={device}
-                  title={"IDN" in device ? device.IDN : device.ID_SERIAL}
-                />
-              </div>
-            );
-          }
-        )
+      {devices.length > 0 ? (
+        devices.flat().map((device, index) => (
+          <div
+            key={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+            className="mt-3"
+          >
+            <DeviceCard
+              data={device}
+              name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+            />
+          </div>
+        ))
       ) : (
         <p>Loading...</p>
       )}

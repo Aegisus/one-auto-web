@@ -3,16 +3,16 @@ import { Divider } from "@nextui-org/divider";
 
 export default function DeviceCard({
   data,
-  title,
+  name,
 }: {
   data: any;
-  title: string;
+  name: string;
 }) {
   return (
-    <Card className="max-w-7xl">
+    <Card>
       <CardHeader className="flex gap-3">
         <div className="flex flex-col">
-          <p className="text-md">{title}</p>
+          <p className="text-md">{name}</p>
         </div>
       </CardHeader>
       <Divider />

@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { Listbox, ListboxItem } from "@nextui-org/listbox";
 import { useSelectedKeysStore } from "../../config/store";
 
-type ItemListType = {
+export type ItemListType = {
   key: string;
   value: string;
 }[];
