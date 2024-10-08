@@ -83,7 +83,7 @@ export function useDBDevices() {
   );
 
   useEffect(() => {
-    console.log("Fetched data from SWR:", data);
+    // console.log("Fetched data from SWR:", data);
     if (data) {
       try {
         const validatedData = DBDevicesArraySchema.parse(data ?? []);

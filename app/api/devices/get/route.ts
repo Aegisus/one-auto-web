@@ -1,22 +1,14 @@
 import { db } from "@/db/drizzle";
 import { device } from "@/db/schema";
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
-export const dynamic = "force-dynamic";
 
-// // Function to force revalidate a path
-// export const forceRevalidate = (request: NextRequest) => {
-//   const path = request.nextUrl.searchParams.get("path") || "/";
-//   revalidatePath(path);
-// };
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   noStore();
   try {
     const allDevice = await db.select().from(device);
-    // console.log(allDevice);
-    // Revalidate the path to ensure fresh data
-    // revalidatePath("/app/api/devices/get");
 
     return new NextResponse(JSON.stringify(allDevice), {
       headers: {
