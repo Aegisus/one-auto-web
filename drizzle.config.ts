@@ -1,13 +1,16 @@
 import { defineConfig } from "drizzle-kit";
+import { config } from "dotenv";
+
+config({ path: ".env" });
 
 export default defineConfig({
   schema: "./db/schema.ts",
-  out: "./db/drizzle",
+  out: "./db/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: "postgresql://neondb_owner:8zZNcm9KrEhq@ep-white-bread-a1qvj6j2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
+    url: process.env.DATABASE_URL!,
   },
   verbose: true,
   strict: true,
-  schemaFilter: ["public", "one_auto"],
+  // schemaFilter: ["public", "one_auto"],
 });

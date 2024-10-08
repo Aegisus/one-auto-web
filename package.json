@@ -6,9 +6,7 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix",
-    "drizzle-generate": "drizzle-kit generate",
-    "drizzle-push": "drizzle-kit push"
+    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.5",

@@ -1,4 +1,3 @@
-// lib/schema.ts
 import {
   pgSchema,
   serial,
