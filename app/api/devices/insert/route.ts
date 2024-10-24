@@ -4,14 +4,15 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
-  const { IDN, ID_SERIAL } = await req.json();
-
   try {
+    const { name, data } = await req.json();
+    const uid = data.ID_MODEL || data.IDN;
+
     // Check if the device exists
     const result = await db
       .select()
       .from(device)
-      .where(eq(device.name, IDN || ID_SERIAL))
+      .where(eq(device.name, name))
       .execute();
 
     if (result.length === 0) {
@@ -19,7 +20,10 @@ export async function POST(req: Request) {
       await db
         .insert(device)
         .values({
-          name: IDN || ID_SERIAL,
+          name: name,
+          data: data,
+          uid: uid,
+          description: "test",
           created_at: new Date(),
           updated_at: new Date(),
         })
@@ -33,7 +37,7 @@ export async function POST(req: Request) {
       });
     }
   } catch (err) {
-    console.error("Error executing query", err.stack);
+    console.error("Error executing query", (err as Error).stack);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

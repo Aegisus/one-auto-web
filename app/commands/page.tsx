@@ -63,9 +63,9 @@ function convertDevicesToListBoxItems(dbDevices: DBDevicesArray): ItemListType {
 export default function DeviceCommands() {
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
-  // useEffect(() => {
-  //   console.log("dbDevices:", dbDevices);
-  // }, [dbDevices]);
+  useEffect(() => {
+    console.log("dbDevices:", dbDevices);
+  }, [dbDevices]);
   const listBoxItems = convertDevicesToListBoxItems(dbDevices);
 
   // useEffect(() => {

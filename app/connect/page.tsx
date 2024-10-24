@@ -1,8 +1,7 @@
 "use client";
 import { useEffect } from "react";
-import DeviceCard from "@/components/card";
+import DeviceCard from "@/components/connect/devicecard";
 import { getDevices } from "@/stores/useFlaskAPIStore";
-import { Button } from "@nextui-org/button";
 
 // Type guards
 function isComportDevice(device: any): device is {
@@ -14,7 +13,7 @@ function isComportDevice(device: any): device is {
   return "ID_SERIAL" in device;
 }
 
-const Comport = () => {
+export default function Connect() {
   const { devices, connectDeviceToSSE } = getDevices();
 
   useEffect(() => {
@@ -24,9 +23,9 @@ const Comport = () => {
     };
   }, [connectDeviceToSSE]);
 
-  // useEffect(() => {
-  //   console.log(devices);
-  // }, [devices]);
+  useEffect(() => {
+    console.log(devices);
+  }, [devices]);
 
   return (
     <div className="max-w-7xl">
@@ -40,14 +39,13 @@ const Comport = () => {
             <DeviceCard
               data={device}
               name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+              actionButton={"Register"}
             />
           </div>
         ))
       ) : (
-        <p>Loading...</p>
+        <p>No devices connected.</p>
       )}
     </div>
   );
-};
-
-export default Comport;
+}

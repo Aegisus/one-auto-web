@@ -1,22 +1,12 @@
 import { create } from "zustand";
-import { z } from "zod";
 import { useEffect } from "react";
 import useSWR, { mutate } from "swr";
 import { env } from "@/env.mjs";
 import axios from "axios";
-// import {
-//   type ComportDeviceType,
-//   type PyvisaDeviceType,
-//   DBDeviceState,
-// } from "@/db/zodDeviceSchema";
 import {
   type DBDeviceType,
-  // ComportDevicesSchema,
-  // PyvisaDevicesSchema,
   DBDevicesArraySchema,
   DBDeviceState,
-  // type ComportDevicesArray,
-  // type PyvisaDevicesArray,
   type DBDevicesArray,
 } from "@/db/zodDBDeviceSchema";
 
@@ -29,40 +19,6 @@ export const endpoints = {
   update: "/update", // server URL
   delete: "/delete", // server URL
 };
-
-// export const useDBDeviceStore = create<DBDeviceState>((set) => ({
-//   comportDevices: [],
-//   setComportDevices: (comportDevices) => set({ comportDevices }),
-//   pyvisaDevices: [],
-//   setPyvisaDevices: (pyvisaDevices) => set({ pyvisaDevices }),
-// }));
-
-// export function useDBDevices() {
-//   const setComportDevices = useDBDeviceStore(
-//     (state) => state.setComportDevices
-//   );
-//   const setPyvisaDevices = useDBDeviceStore((state) => state.setPyvisaDevices);
-
-//   const { data, isLoading, error, isValidating } = useSWR(
-//     env.NEXT_PUBLIC_APP_URL + ":3000/" + endpoints.key + endpoints.list,
-//     fetcher,
-//     {
-//       revalidateIfStale: false,
-//       revalidateOnFocus: false,
-//       revalidateOnReconnect: false,
-//     }
-//   );
-
-//   useEffect(() => {
-//     console.log("Fetched data from SWR:", data);
-//     if (data) {
-//       setComportDevices(data.comportDevices ?? []);
-//       setPyvisaDevices(data.pyvisaDevices ?? []);
-//     }
-//   }, [data, setComportDevices, setPyvisaDevices]);
-
-//   return { isLoading, error, isValidating };
-// }
 
 export const useDBDeviceStore = create<DBDeviceState>((set) => ({
   dbDevices: [] as DBDevicesArray,
@@ -97,21 +53,6 @@ export function useDBDevices() {
 
   return { isLoading, error, isValidating };
 }
-
-// export async function fetchDevices() {
-//   try {
-//     const response = await axios.get(
-//       `${process.env.NEXT_PUBLIC_APP_URL}:3000/api/devices/get`
-//     );
-//     // console.log("Fetched data:", response.data);
-//     // return response.data;
-//     const validatedData = DBDevicesArraySchema.parse(response.data);
-//     return validatedData;
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//     throw error;
-//   }
-// }
 
 export async function insertDevices(newDevice: DBDeviceType) {
   // to update local state based on key
