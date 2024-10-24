@@ -3,6 +3,7 @@ import { ComportDeviceSchema, PyvisaDeviceSchema } from "@/db/zodDeviceSchema";
 
 const DBDeviceSchema = z.object({
   id: z.number(),
+  uid: z.string(),
   name: z.string(),
   description: z.string(),
   // data: ComportDeviceSchema || PyvisaDeviceSchema,

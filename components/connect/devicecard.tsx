@@ -6,10 +6,13 @@ export default function DeviceCard({
   data,
   name,
   actionButton,
+  selectedDevice,
 }: {
   data: any;
   name: string;
   actionButton: string;
+  selectedDevice: string | undefined;
+  setSelectedDevice: React.Dispatch<React.SetStateAction<string | undefined>>;
 }) {
   const handlePostRequest = async () => {
     try {
@@ -47,9 +50,11 @@ export default function DeviceCard({
           </p>
         ))}
       </CardBody>
-      <div className="absolute bottom-3 right-2">
-        <Button onClick={handlePostRequest}>{actionButton}</Button>
-      </div>
+      {actionButton !== "" && (
+        <div className="absolute bottom-3 right-2">
+          <Button onClick={handlePostRequest}>{actionButton}</Button>
+        </div>
+      )}
     </Card>
   );
 }

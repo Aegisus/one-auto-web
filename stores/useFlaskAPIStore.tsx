@@ -95,7 +95,7 @@ const createESFlaskDevice = (
     try {
       const parsedData = JSON.parse(JSON.parse(event.data));
       onMessage(parsedData);
-      console.log(parsedData);
+      // console.log(parsedData);
     } catch (error) {
       console.error("Failed to parse JSON data for", deviceType, ":", error);
     }

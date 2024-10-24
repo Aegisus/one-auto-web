@@ -15,16 +15,16 @@ import type { ItemListType } from "@/components/commands/listbox";
 //   type PyvisaDeviceType,
 // } from "@/db/zodDeviceSchema";
 
-const deviceList = [
-  {
-    key: "CQT_Laser_driver_QO_024",
-    value: "Laser_driver",
-  },
-  {
-    key: "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
-    value: "VOA_Driver",
-  },
-];
+// const deviceList = [
+//   {
+//     key: "CQT_Laser_driver_QO_024",
+//     value: "Laser_driver",
+//   },
+//   {
+//     key: "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
+//     value: "VOA_Driver",
+//   },
+// ];
 
 // const dbDevices: DBDevicesArray = [
 //   {
