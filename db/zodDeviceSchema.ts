@@ -49,7 +49,9 @@ export const DeviceSchema = z.union([
 // export type PyvisaDevicesArray = PyvisaDeviceType[];
 
 export type DeviceType = z.infer<typeof DeviceSchema>;
-export type DevicesArray = DeviceType[];
+// export type DevicesArray = DeviceType[];
+export const DevicesArraySchema = z.array(DeviceSchema);
+export type DevicesArray = z.infer<typeof DevicesArraySchema>;
 
 // export interface DeviceState {
 //   comportDevices: ComportDevicesArray;

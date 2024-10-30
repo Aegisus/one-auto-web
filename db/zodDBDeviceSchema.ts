@@ -14,7 +14,8 @@ const DBDeviceSchema = z.object({
 
 export const DBDevicesArraySchema = z.array(DBDeviceSchema);
 export type DBDeviceType = z.infer<typeof DBDeviceSchema>;
-export type DBDevicesArray = DBDeviceType[];
+// export type DBDevicesArray = DBDeviceType[];
+export type DBDevicesArray = z.infer<typeof DBDevicesArraySchema>;
 
 export interface DBDeviceState {
   dbDevices: DBDevicesArray;

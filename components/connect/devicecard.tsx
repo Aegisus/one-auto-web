@@ -6,7 +6,7 @@ export default function DeviceCard({
   data,
   name,
   actionButton,
-  selectedDevice,
+  setSelectedDevice,
 }: {
   data: any;
   name: string;
@@ -14,26 +14,26 @@ export default function DeviceCard({
   selectedDevice: string | undefined;
   setSelectedDevice: React.Dispatch<React.SetStateAction<string | undefined>>;
 }) {
-  const handlePostRequest = async () => {
-    try {
-      const response = await fetch("/api/devices/insert", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ data, name }),
-      });
+  // const handlePostRequest = async () => {
+  //   try {
+  //     const response = await fetch("/api/devices/insert", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ data, name }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+  //     if (!response.ok) {
+  //       throw new Error("Network response was not ok");
+  //     }
 
-      const result = await response.json();
-      console.log("Success:", result);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+  //     const result = await response.json();
+  //     console.log("Success:", result);
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //   }
+  // };
 
   return (
     <Card className="relative p-4">
@@ -52,9 +52,33 @@ export default function DeviceCard({
       </CardBody>
       {actionButton !== "" && (
         <div className="absolute bottom-3 right-2">
-          <Button onClick={handlePostRequest}>{actionButton}</Button>
+          <Button onClick={() => setSelectedDevice(name)}>
+            {actionButton}
+          </Button>
         </div>
       )}
     </Card>
   );
 }
+
+// (() => {
+//   const selectedDeviceObject = findSelectedDevice(
+//     devices,
+//     selectedDevice
+//   );
+//   return selectedDeviceObject ? (
+//     Object.keys(selectedDeviceObject).map((key) => (
+//       <Input
+//         key={key}
+//         isReadOnly
+//         type="text"
+//         label={key}
+//         variant="bordered"
+//         defaultValue={selectedDeviceObject[key]}
+//         className="max-w-xs"
+//       />
+//     ))
+//   ) : (
+//     <p>Selected device not found</p>
+//   );
+// })()

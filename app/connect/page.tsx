@@ -5,10 +5,15 @@ import DeviceCard from "@/components/connect/devicecard";
 import { getDevices } from "@/stores/useFlaskAPIStore";
 import { useDBDeviceStore, useDBDevices } from "@/stores/useDeviceStore";
 import { Breadcrumbs, BreadcrumbItem } from "@nextui-org/breadcrumbs";
-import { type DeviceType } from "@/db/zodDeviceSchema";
+import { type DeviceType, type DevicesArray } from "@/db/zodDeviceSchema";
 import { type DBDevicesArray } from "@/db/zodDBDeviceSchema";
+import { Input } from "@nextui-org/input";
+import { Button } from "@nextui-org/button";
 
 type SingleDevice = DeviceType extends Array<infer U> ? U : never;
+type SingleDeviceField = {
+  [K in keyof SingleDevice]: SingleDevice[K] | null;
+};
 
 // Type guards
 function isComportDevice(device: any): device is {
@@ -34,11 +39,11 @@ export default function Connect() {
   // db devices
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
-  useEffect(() => {
-    // const deviceUIDs = dbDevices.map((device) => device.uid);
-    console.log("dbDevices:", dbDevices);
-    // console.log("UIDs:", deviceUIDs);
-  }, [dbDevices]);
+  // useEffect(() => {
+  //   // const deviceUIDs = dbDevices.map((device) => device.uid);
+  //   console.log("dbDevices:", dbDevices);
+  //   // console.log("UIDs:", deviceUIDs);
+  // }, [dbDevices]);
 
   useEffect(() => {
     const disconnect = connectDeviceToSSE();
@@ -121,24 +126,147 @@ export default function Connect() {
     undefined
   );
 
-  // useEffect(() => {
-  //   console.log(devices);
-  //   console.log("Device Param:", deviceParam); // Log the device param for testing
-  // }, [devices, deviceParam]);
+  const [deviceRequestData, setDeviceRequestData] =
+    useState<SingleDeviceField | null>(null);
+
+  useEffect(() => {
+    console.log(deviceRequestData);
+  }, [deviceRequestData]);
+
+  const findSelectedDevice = (
+    devices: DevicesArray,
+    selectedDevice: string | undefined
+  ): DeviceType | null => {
+    for (const device of devices) {
+      if (
+        ("ID_SERIAL" in device && device.ID_SERIAL === selectedDevice) ||
+        ("IDN" in device && device.IDN === selectedDevice)
+      ) {
+        return device;
+      }
+    }
+    return null; // Return null if no matching device is found
+  };
+
+  const findSelectedDBDevice = (
+    dbdevices: DBDevicesArray,
+    selectedDevice: string | undefined
+  ): SingleDeviceField | null => {
+    for (const device of dbdevices) {
+      if (
+        ("ID_SERIAL" in device.data &&
+          device.data.ID_SERIAL === selectedDevice) ||
+        ("IDN" in device.data && device.data.IDN === selectedDevice)
+      ) {
+        return device.data;
+      }
+    }
+    return null; // Return null if no matching device is found
+  };
+
+  const handleUpdateRequest = async () => {
+    try {
+      const response = await fetch("/api/devices/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceRequestData }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const result = await response.json();
+      console.log("Success:", result);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleInputChange = (key: string, value: string) => {
+    setDeviceRequestData((prevData) => ({
+      ...prevData,
+      [key]: value,
+    }));
+  };
 
   return (
     <div className="max-w-7xl">
-      {selectedDevice && (
-        <div className="mb-7">
-          <Breadcrumbs>
-            <BreadcrumbItem href="/connect">Connect Device</BreadcrumbItem>
-            <BreadcrumbItem>{selectedDevice}</BreadcrumbItem>
-          </Breadcrumbs>
-        </div>
-      )}
-      <h1>Connected Devices</h1>
-      {/* {deviceParam && <p>Device Selected: {deviceParam}</p>} */}
-      {devices.length > 0 ? (
+      <div className="mb-7">
+        <Breadcrumbs>
+          <BreadcrumbItem onClick={() => setSelectedDevice(undefined)}>
+            Connect Device
+          </BreadcrumbItem>
+          {selectedDevice && <BreadcrumbItem>{selectedDevice}</BreadcrumbItem>}
+        </Breadcrumbs>
+      </div>
+
+      {selectedDevice ? (
+        (() => {
+          const selectedDeviceObject = findSelectedDevice(
+            devices,
+            selectedDevice
+          );
+          const selectedDBDeviceObject = findSelectedDBDevice(
+            dbDevices,
+            selectedDevice
+          );
+          if (selectedDBDeviceObject && !deviceRequestData) {
+            setDeviceRequestData(selectedDBDeviceObject);
+          }
+          return selectedDeviceObject && selectedDBDeviceObject ? (
+            <div className="flex flex-col">
+              <div className="flex justify-center space-x-10">
+                <div>
+                  <div className="flex justify-center mb-4">
+                    <h2 className="text-lg">Flask Device</h2>
+                  </div>
+                  {Object.entries(selectedDeviceObject).map(([key, value]) => (
+                    <Input
+                      key={key}
+                      isReadOnly
+                      type="text"
+                      label={key}
+                      variant="bordered"
+                      defaultValue={value}
+                      className="max-w-xs mb-4"
+                    />
+                  ))}
+                </div>
+                <div>
+                  <div className="flex justify-center mb-4">
+                    <h2 className="text-lg">Database Device</h2>
+                  </div>
+                  {Object.entries(selectedDBDeviceObject).map(
+                    ([key, value]) => (
+                      <Input
+                        key={key}
+                        type="text"
+                        label={key}
+                        variant="flat"
+                        defaultValue={String(value)}
+                        className="max-w-xs mb-4"
+                        onChange={(e) => handleInputChange(key, e.target.value)}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+              <Button
+                className="w-24 mx-auto"
+                onClick={() => handleUpdateRequest()}
+              >
+                Update
+              </Button>
+            </div>
+          ) : (
+            <p>Selected device not found</p>
+          );
+        })()
+      ) : // from
+      devices.length > 0 ? (
         devices.flat().map((device, index) => (
           <div
             key={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
@@ -158,7 +286,7 @@ export default function Connect() {
           </div>
         ))
       ) : (
-        <p>No devices connected.</p>
+        <p>No devices connected. {devices.length}</p>
       )}
     </div>
   );
