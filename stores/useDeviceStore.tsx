@@ -86,20 +86,52 @@ export async function insertDevices(newDevice: DBDeviceType) {
   // return responseData;
 }
 
-export function updateDevice(updatedDevice: DBDeviceType) {
-  // to update local state based on key
-  mutate(
-    env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list,
-    () => {
-      return {
-        updatedDevice,
-      };
-    },
-    false
-  );
+// export function updateDevice(updatedDevice: DBDeviceType) {
+//   // to update local state based on key
+//   mutate(
+//     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list,
+//     () => {
+//       return {
+//         updatedDevice,
+//       };
+//     },
+//     false
+//   );
 
-  // to hit server
-  // you may need to refetch latest data after server hit and based on your logic
-  //   const data = { list: updatedCustomer };
-  //   await axios.post(endpoints.key + endpoints.update, data);
+//   // to hit server
+//   // you may need to refetch latest data after server hit and based on your logic
+//   //   const data = { list: updatedCustomer };
+//   //   await axios.post(endpoints.key + endpoints.update, data);
+// }
+
+export async function handleUpdateRequest(
+  selectedDeviceUID: string | undefined,
+  deviceRequestData: any
+) {
+  try {
+    const response = await fetch(
+      env.NEXT_PUBLIC_APP_URL + ":3000/" + endpoints.key + endpoints.update,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ selectedDeviceUID, deviceRequestData }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const result = await response.json();
+    console.log("Success:", result);
+
+    await mutate(
+      env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list
+    );
+    window.location.reload();
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }

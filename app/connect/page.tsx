@@ -9,10 +9,21 @@ import { type DeviceType, type DevicesArray } from "@/db/zodDeviceSchema";
 import { type DBDevicesArray } from "@/db/zodDBDeviceSchema";
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
+import { handleUpdateRequest } from "@/stores/useDeviceStore";
 
 type SingleDevice = DeviceType extends Array<infer U> ? U : never;
 type SingleDeviceField = {
   [K in keyof SingleDevice]: SingleDevice[K] | null;
+};
+
+type DBDeviceField = {
+  id: number;
+  uid: string;
+  name: string;
+  description: string;
+  data: SingleDeviceField;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 // Type guards
@@ -83,7 +94,7 @@ export default function Connect() {
       const deviceKeys = Object.keys(device).sort();
       const dbDeviceKeys = Object.keys(dbDevice.data).sort();
       if (JSON.stringify(deviceKeys) === JSON.stringify(dbDeviceKeys)) {
-        return ["Update", device, dbDevice.data];
+        return ["Update required", device, dbDevice.data];
       }
     }
 
@@ -114,24 +125,31 @@ export default function Connect() {
       });
 
       if (similarKeys.length > 0 && similarValues.length > 0) {
-        return ["Update", device, dbDevice.data];
+        return ["Update required", device, dbDevice.data];
       }
     }
 
     // Level 4: No match found
-    return ["Register", null, null];
+    return ["Register required", null, null];
   }
 
   const [selectedDevice, setSelectedDevice] = useState<string | undefined>(
     undefined
   );
 
+  const [selectedDeviceUID, setSelectedDeviceUID] = useState<
+    string | undefined
+  >(undefined);
+
   const [deviceRequestData, setDeviceRequestData] =
-    useState<SingleDeviceField | null>(null);
+    useState<DBDeviceField | null>(null);
 
   useEffect(() => {
     console.log(deviceRequestData);
   }, [deviceRequestData]);
+  useEffect(() => {
+    console.log(selectedDeviceUID);
+  }, [selectedDeviceUID]);
 
   const findSelectedDevice = (
     devices: DevicesArray,
@@ -151,54 +169,91 @@ export default function Connect() {
   const findSelectedDBDevice = (
     dbdevices: DBDevicesArray,
     selectedDevice: string | undefined
-  ): SingleDeviceField | null => {
+  ): DBDeviceField | null => {
     for (const device of dbdevices) {
       if (
         ("ID_SERIAL" in device.data &&
           device.data.ID_SERIAL === selectedDevice) ||
         ("IDN" in device.data && device.data.IDN === selectedDevice)
       ) {
-        return device.data;
+        // setSelectedDeviceUID(device.uid);
+        // setDeviceRequestData(device);
+        return device;
       }
     }
     return null; // Return null if no matching device is found
   };
 
-  const handleUpdateRequest = async () => {
-    try {
-      const response = await fetch("/api/devices/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ deviceRequestData }),
-      });
+  // const handleUpdateRequest = async () => {
+  //   try {
+  //     const response = await fetch("/api/devices/update", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ selectedDeviceUID, deviceRequestData }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+  //     if (!response.ok) {
+  //       throw new Error("Network response was not ok");
+  //     }
 
-      const result = await response.json();
-      console.log("Success:", result);
-    } catch (error) {
-      console.error("Error:", error);
-    }
+  //     const result = await response.json();
+  //     console.log("Success:", result);
+  //     // resetStates();
+  //     window.location.reload();
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //   }
+  // };
+
+  const onUpdate = () => {
+    handleUpdateRequest(selectedDeviceUID, deviceRequestData);
   };
 
   const handleInputChange = (key: string, value: string) => {
-    setDeviceRequestData((prevData) => ({
-      ...prevData,
-      [key]: value,
-    }));
+    if (deviceRequestData) {
+      const keys = key.split(".");
+      if (keys.length === 2 && keys[0] === "data") {
+        setDeviceRequestData({
+          ...deviceRequestData,
+          data: {
+            ...deviceRequestData.data,
+            [keys[1]]: value,
+          },
+        });
+      } else {
+        setDeviceRequestData({
+          ...deviceRequestData,
+          [key]: value,
+        });
+      }
+    }
+  };
+
+  const resetStates = () => {
+    setSelectedDevice(undefined);
+    setDeviceRequestData(null);
+    setSelectedDeviceUID(undefined);
+  };
+
+  const copyDeviceToDBDeviceField = (
+    device: DeviceType,
+    selectedDBDeviceObject: DBDeviceField
+  ) => {
+    setDeviceRequestData({
+      ...selectedDBDeviceObject,
+      data: {
+        ...device,
+      },
+    });
   };
 
   return (
     <div className="max-w-7xl">
       <div className="mb-7">
         <Breadcrumbs>
-          <BreadcrumbItem onClick={() => setSelectedDevice(undefined)}>
-            Connect Device
-          </BreadcrumbItem>
+          <BreadcrumbItem onPress={resetStates}>Connect Device</BreadcrumbItem>
           {selectedDevice && <BreadcrumbItem>{selectedDevice}</BreadcrumbItem>}
         </Breadcrumbs>
       </div>
@@ -215,6 +270,7 @@ export default function Connect() {
           );
           if (selectedDBDeviceObject && !deviceRequestData) {
             setDeviceRequestData(selectedDBDeviceObject);
+            setSelectedDeviceUID(selectedDBDeviceObject.uid);
           }
           return selectedDeviceObject && selectedDBDeviceObject ? (
             <div className="flex flex-col">
@@ -239,30 +295,124 @@ export default function Connect() {
                   <div className="flex justify-center mb-4">
                     <h2 className="text-lg">Database Device</h2>
                   </div>
-                  {Object.entries(selectedDBDeviceObject).map(
+                  <Input
+                    type="text"
+                    label="Name"
+                    variant="flat"
+                    defaultValue={selectedDBDeviceObject.name}
+                    className="max-w-xs mb-4"
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    label="UID"
+                    variant="flat"
+                    defaultValue={selectedDBDeviceObject.uid}
+                    className="max-w-xs mb-4"
+                    onChange={(e) => handleInputChange("uid", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    label="Description"
+                    variant="flat"
+                    defaultValue={selectedDBDeviceObject.description}
+                    className="max-w-xs mb-4"
+                    onChange={(e) =>
+                      handleInputChange("description", e.target.value)
+                    }
+                  />
+                  {Object.entries(deviceRequestData?.data || {}).map(
                     ([key, value]) => (
                       <Input
                         key={key}
                         type="text"
                         label={key}
                         variant="flat"
-                        defaultValue={String(value)}
+                        // defaultValue={String(value)}
+                        value={String(value)}
                         className="max-w-xs mb-4"
-                        onChange={(e) => handleInputChange(key, e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange(`data.${key}`, e.target.value)
+                        }
                       />
                     )
                   )}
                 </div>
               </div>
-              <Button
-                className="w-24 mx-auto"
-                onClick={() => handleUpdateRequest()}
-              >
-                Update
-              </Button>
+              <div className="flex justify-center gap-3">
+                <Button
+                  className="w-42"
+                  onClick={() =>
+                    copyDeviceToDBDeviceField(
+                      selectedDeviceObject,
+                      selectedDBDeviceObject
+                    )
+                  }
+                >
+                  Retrieve flask data
+                </Button>
+                <Button className="w-24 " onClick={onUpdate}>
+                  Update
+                </Button>
+              </div>
             </div>
           ) : (
-            <p>Selected device not found</p>
+            <div className="flex flex-col max-w-7xl">
+              <h2 className="text-lg mx-auto mb-3">Register Flask Device</h2>
+              <Input
+                type="text"
+                label="Name"
+                variant="flat"
+                className="max-w-xs mb-4 mx-auto"
+                onChange={(e) => handleInputChange("name", e.target.value)}
+              />
+              <Input
+                type="text"
+                label="UID"
+                variant="flat"
+                className="max-w-xs mb-4 mx-auto"
+                onChange={(e) => handleInputChange("uid", e.target.value)}
+              />
+              <Input
+                type="text"
+                label="Description"
+                variant="flat"
+                className="max-w-xs mb-4 mx-auto"
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+              />
+              {selectedDeviceObject &&
+                Object.entries(selectedDeviceObject).map(([key, value]) => (
+                  <Input
+                    key={key}
+                    type="text"
+                    label={key}
+                    variant="bordered"
+                    value={String(value)}
+                    className="max-w-xs mb-4 mx-auto"
+                    onChange={(e) =>
+                      handleInputChange(`data.${key}`, e.target.value)
+                    }
+                  />
+                ))}
+              {/* {Object.entries(deviceRequestData?.data || {}).map(
+                ([key, value]) => (
+                  <Input
+                    key={key}
+                    type="text"
+                    label={key}
+                    variant="flat"
+                    // defaultValue={String(value)}
+                    value={String(value)}
+                    className="max-w-xs mb-4"
+                  />
+                )
+              )} */}
+              <Button className="w-24 mx-auto" onClick={onUpdate}>
+                Register
+              </Button>
+            </div>
           );
         })()
       ) : // from
@@ -272,17 +422,24 @@ export default function Connect() {
             key={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
             className="mt-3"
           >
-            <DeviceCard
-              data={device}
-              name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
-              actionButton={
-                compareDevices(device, dbDevices)[0] === "Exact"
-                  ? ""
-                  : compareDevices(device, dbDevices)[0]
+            <div
+              onClick={() =>
+                setSelectedDevice(
+                  isComportDevice(device) ? device.ID_SERIAL : device.IDN
+                )
               }
-              selectedDevice={selectedDevice}
-              setSelectedDevice={setSelectedDevice}
-            />
+              className="cursor-pointer"
+            >
+              <DeviceCard
+                data={device}
+                name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+                actionRequired={
+                  compareDevices(device, dbDevices)[0] === "Exact"
+                    ? ""
+                    : compareDevices(device, dbDevices)[0]
+                }
+              />
+            </div>
           </div>
         ))
       ) : (

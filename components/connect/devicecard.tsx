@@ -1,18 +1,19 @@
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Divider } from "@nextui-org/divider";
 import { Button } from "@nextui-org/button";
+import { Badge } from "@nextui-org/badge";
 
 export default function DeviceCard({
   data,
   name,
-  actionButton,
-  setSelectedDevice,
-}: {
+  actionRequired,
+}: // setSelectedDevice,
+{
   data: any;
   name: string;
-  actionButton: string;
-  selectedDevice: string | undefined;
-  setSelectedDevice: React.Dispatch<React.SetStateAction<string | undefined>>;
+  actionRequired: string;
+  // selectedDevice: string | undefined;
+  // setSelectedDevice: React.Dispatch<React.SetStateAction<string | undefined>>;
 }) {
   // const handlePostRequest = async () => {
   //   try {
@@ -37,10 +38,21 @@ export default function DeviceCard({
 
   return (
     <Card className="relative p-4">
-      <CardHeader className="flex gap-3">
-        <div className="flex flex-col">
-          <p className="text-md">{name}</p>
-        </div>
+      <CardHeader className="flex justify-between">
+        <p className="text-md">{name}</p>
+        {actionRequired !== "" && (
+          <Badge content="" color="warning" variant="shadow">
+            <Button
+              radius="lg"
+              disableRipple
+              disableAnimation
+              size="sm"
+              className="cursor-default"
+            >
+              {actionRequired}
+            </Button>
+          </Badge>
+        )}
       </CardHeader>
       <Divider />
       <CardBody className="w-[70%]">
@@ -50,13 +62,6 @@ export default function DeviceCard({
           </p>
         ))}
       </CardBody>
-      {actionButton !== "" && (
-        <div className="absolute bottom-3 right-2">
-          <Button onClick={() => setSelectedDevice(name)}>
-            {actionButton}
-          </Button>
-        </div>
-      )}
     </Card>
   );
 }
