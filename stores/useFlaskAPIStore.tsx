@@ -6,34 +6,6 @@ import {
   type DevicesArray,
 } from "@/db/zodDeviceSchema";
 
-// export const getDevices = create<DeviceState>((set) => ({
-//   devices: [] as DevicesArray,
-//   setDevices: (devices: DevicesArray) => set({ devices }),
-//   connectDeviceToSSE: () => {
-//     const handleData = (deviceType: "comport" | "pyvisa") => {
-//       return createESFlaskDevice(
-//         deviceType,
-//         (rawData: DevicesArray) => {
-//           set((state) => ({
-//             devices: [...state.devices, ...rawData],
-//           }));
-//         },
-//         (error) => {
-//           console.error("Error fetching data:", error);
-//         }
-//       );
-//     };
-
-//     const comportEventSource = handleData("comport");
-//     const pyvisaEventSource = handleData("pyvisa");
-
-//     return () => {
-//       comportEventSource.close();
-//       pyvisaEventSource.close();
-//     };
-//   },
-// }));
-
 export const getDevices = create<DeviceState>((set) => ({
   devices: [] as DevicesArray,
   setDevices: (devices: DevicesArray) => set({ devices }),
@@ -83,6 +55,7 @@ export const getDevices = create<DeviceState>((set) => ({
     };
   },
 }));
+
 const createESFlaskDevice = (
   deviceType: "comport" | "pyvisa",
   onMessage: (data: any) => void,
@@ -109,3 +82,57 @@ const createESFlaskDevice = (
 
   return eventSource;
 };
+
+const createESSimFlaskDevice = (
+  onMessage: (data: any) => void,
+  onError: (error: any) => void
+) => {
+  const url = `${env.NEXT_PUBLIC_APP_URL}:3000/api/flaskAPISimulation`;
+  const eventSource = new EventSource(url);
+
+  eventSource.onmessage = (event) => {
+    // const data = JSON.parse(event.data);
+    const parsedData = JSON.parse(JSON.parse(event.data));
+    onMessage(parsedData);
+  };
+
+  eventSource.onerror = (error) => {
+    console.error("EventSource error:", error);
+    onError(error);
+    eventSource.close();
+  };
+
+  return eventSource;
+};
+
+export const getSimulationDevices = create<DeviceState>((set) => ({
+  devices: [] as DevicesArray,
+  setDevices: (devices: DevicesArray) => set({ devices }),
+  connectDeviceToSSE: () => {
+    let deviceData: DevicesArray = [];
+
+    const updateDevices = () => {
+      set((state) => ({
+        devices: [...deviceData],
+      }));
+    };
+
+    const handleData = () => {
+      return createESSimFlaskDevice(
+        (rawData: DevicesArray) => {
+          deviceData = rawData.length === 0 ? [] : rawData;
+          updateDevices();
+        },
+        (error) => {
+          console.error("Error fetching data:", error);
+        }
+      );
+    };
+
+    const eventSource = handleData();
+
+    return () => {
+      eventSource.close();
+    };
+  },
+}));

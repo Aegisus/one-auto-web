@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from "react";
 import DeviceCard from "@/components/connect/devicecard";
-import { getDevices } from "@/stores/useFlaskAPIStore";
+// import { getDevices, getSimulationDevices } from "@/stores/useFlaskAPIStore";
+import { getSimulationDevices } from "@/stores/useFlaskAPIStore";
 import { useDBDeviceStore, useDBDevices } from "@/stores/useDeviceStore";
 import { Breadcrumbs, BreadcrumbItem } from "@nextui-org/breadcrumbs";
 import { type DeviceType, type DevicesArray } from "@/db/zodDeviceSchema";
 import { type DBDevicesArray } from "@/db/zodDBDeviceSchema";
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
-import { handleUpdateRequest } from "@/stores/useDeviceStore";
+import {
+  handleFlaskUpdateRequest,
+  handleFlaskInsertRequest,
+} from "@/stores/useDeviceStore";
 
 type SingleDevice = DeviceType extends Array<infer U> ? U : never;
 type SingleDeviceField = {
@@ -17,11 +21,11 @@ type SingleDeviceField = {
 };
 
 type DBDeviceField = {
-  id: number;
+  // id: number;
   uid: string;
   name: string;
   description: string;
-  data: SingleDeviceField;
+  data: SingleDeviceField | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -45,16 +49,12 @@ function isPyvisaDevice(device: any): device is {
 
 export default function Connect() {
   // from flask
-  const { devices, connectDeviceToSSE } = getDevices();
+  // const { devices, connectDeviceToSSE } = getDevices();
+  const { devices, connectDeviceToSSE } = getSimulationDevices();
 
   // db devices
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
-  // useEffect(() => {
-  //   // const deviceUIDs = dbDevices.map((device) => device.uid);
-  //   console.log("dbDevices:", dbDevices);
-  //   // console.log("UIDs:", deviceUIDs);
-  // }, [dbDevices]);
 
   useEffect(() => {
     const disconnect = connectDeviceToSSE();
@@ -63,74 +63,13 @@ export default function Connect() {
     };
   }, [connectDeviceToSSE]);
 
-  // Get 'device' param
-  // const deviceUIDs = dbDevices.map((device) => device.uid);
-  // console.log("dbDevices:", dbDevices);
-  // console.log("UIDs:", deviceUIDs);
-
   function compareDevices(
     device: SingleDevice,
     dbDevices: DBDevicesArray
   ): [string, any, any] {
-    const deepEqual = (obj1: any, obj2: any) => {
-      const keys1 = Object.keys(obj1).sort();
-      const keys2 = Object.keys(obj2).sort();
-      if (keys1.length !== keys2.length) return false;
-      for (let key of keys1) {
-        if (obj1[key] !== obj2[key]) return false;
-      }
-      return true;
-    };
-
-    // Level 1: Exact match
-    for (const dbDevice of dbDevices) {
-      if (deepEqual(device, dbDevice.data)) {
-        return ["Exact", device, dbDevice.data];
-      }
-    }
-
-    // Level 2: Same keys, different values
-    for (const dbDevice of dbDevices) {
-      const deviceKeys = Object.keys(device).sort();
-      const dbDeviceKeys = Object.keys(dbDevice.data).sort();
-      if (JSON.stringify(deviceKeys) === JSON.stringify(dbDeviceKeys)) {
-        return ["Update required", device, dbDevice.data];
-      }
-    }
-
-    // Level 3: Similar naming keys and values
-    for (const dbDevice of dbDevices) {
-      const deviceKeys = Object.keys(device).sort();
-      const dbDeviceKeys = Object.keys(dbDevice.data).sort();
-      const similarKeys = deviceKeys.filter((key) =>
-        dbDeviceKeys.includes(key)
-      );
-      const similarValues = similarKeys.filter((key) => {
-        if (isComportDevice(device) && isComportDevice(dbDevice.data)) {
-          return (
-            key in device &&
-            key in dbDevice.data &&
-            device[key as keyof typeof device] ===
-              dbDevice.data[key as keyof typeof dbDevice.data]
-          );
-        } else if (isPyvisaDevice(device) && isPyvisaDevice(dbDevice.data)) {
-          return (
-            key in device &&
-            key in dbDevice.data &&
-            device[key as keyof typeof device] ===
-              dbDevice.data[key as keyof typeof dbDevice.data]
-          );
-        }
-        return false;
-      });
-
-      if (similarKeys.length > 0 && similarValues.length > 0) {
-        return ["Update required", device, dbDevice.data];
-      }
-    }
-
-    // Level 4: No match found
-    return ["Register required", null, null];
+    // console.log(device);
+    // console.log(dbDevices);
+    return ["Test", null, null];
   }
 
   const [selectedDevice, setSelectedDevice] = useState<string | undefined>(
@@ -144,17 +83,21 @@ export default function Connect() {
   const [deviceRequestData, setDeviceRequestData] =
     useState<DBDeviceField | null>(null);
 
+  // useEffect(() => {
+  //   console.log(devices);
+  // }, [devices]);
   useEffect(() => {
+    devices;
     console.log(deviceRequestData);
   }, [deviceRequestData]);
-  useEffect(() => {
-    console.log(selectedDeviceUID);
-  }, [selectedDeviceUID]);
+  // useEffect(() => {
+  //   console.log(selectedDeviceUID);
+  // }, [selectedDeviceUID]);
 
   const findSelectedDevice = (
     devices: DevicesArray,
     selectedDevice: string | undefined
-  ): DeviceType | null => {
+  ): SingleDeviceField | null => {
     for (const device of devices) {
       if (
         ("ID_SERIAL" in device && device.ID_SERIAL === selectedDevice) ||
@@ -176,39 +119,10 @@ export default function Connect() {
           device.data.ID_SERIAL === selectedDevice) ||
         ("IDN" in device.data && device.data.IDN === selectedDevice)
       ) {
-        // setSelectedDeviceUID(device.uid);
-        // setDeviceRequestData(device);
         return device;
       }
     }
     return null; // Return null if no matching device is found
-  };
-
-  // const handleUpdateRequest = async () => {
-  //   try {
-  //     const response = await fetch("/api/devices/update", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ selectedDeviceUID, deviceRequestData }),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error("Network response was not ok");
-  //     }
-
-  //     const result = await response.json();
-  //     console.log("Success:", result);
-  //     // resetStates();
-  //     window.location.reload();
-  //   } catch (error) {
-  //     console.error("Error:", error);
-  //   }
-  // };
-
-  const onUpdate = () => {
-    handleUpdateRequest(selectedDeviceUID, deviceRequestData);
   };
 
   const handleInputChange = (key: string, value: string) => {
@@ -238,7 +152,7 @@ export default function Connect() {
   };
 
   const copyDeviceToDBDeviceField = (
-    device: DeviceType,
+    device: SingleDeviceField,
     selectedDBDeviceObject: DBDeviceField
   ) => {
     setDeviceRequestData({
@@ -271,6 +185,16 @@ export default function Connect() {
           if (selectedDBDeviceObject && !deviceRequestData) {
             setDeviceRequestData(selectedDBDeviceObject);
             setSelectedDeviceUID(selectedDBDeviceObject.uid);
+          } else if (!deviceRequestData) {
+            const newDBDeviceField: DBDeviceField = {
+              uid: "",
+              name: "",
+              description: "",
+              data: selectedDeviceObject,
+              created_at: "",
+              updated_at: "",
+            };
+            setDeviceRequestData(newDBDeviceField);
           }
           return selectedDeviceObject && selectedDBDeviceObject ? (
             <div className="flex flex-col">
@@ -286,7 +210,7 @@ export default function Connect() {
                       type="text"
                       label={key}
                       variant="bordered"
-                      defaultValue={value}
+                      defaultValue={value as string | undefined}
                       className="max-w-xs mb-4"
                     />
                   ))}
@@ -351,7 +275,15 @@ export default function Connect() {
                 >
                   Retrieve flask data
                 </Button>
-                <Button className="w-24 " onClick={onUpdate}>
+                <Button
+                  className="w-24 "
+                  onClick={() =>
+                    handleFlaskUpdateRequest(
+                      selectedDeviceUID,
+                      deviceRequestData
+                    )
+                  }
+                >
                   Update
                 </Button>
               </div>
@@ -409,7 +341,10 @@ export default function Connect() {
                   />
                 )
               )} */}
-              <Button className="w-24 mx-auto" onClick={onUpdate}>
+              <Button
+                className="w-24 mx-auto"
+                onClick={() => handleFlaskInsertRequest(deviceRequestData)}
+              >
                 Register
               </Button>
             </div>

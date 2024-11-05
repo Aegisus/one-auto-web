@@ -29,7 +29,7 @@ export function useDBDevices() {
   const setDevices = useDBDeviceStore((state) => state.setDBDevices);
 
   const { data, isLoading, error, isValidating } = useSWR(
-    env.NEXT_PUBLIC_APP_URL + ":3000/" + endpoints.key + endpoints.list,
+    `${env.NEXT_PUBLIC_APP_URL}:3000/${endpoints.key}/${endpoints.list}`,
     fetcher,
     {
       revalidateIfStale: false,
@@ -39,11 +39,9 @@ export function useDBDevices() {
   );
 
   useEffect(() => {
-    // console.log("Fetched data from SWR:", data);
     if (data) {
       try {
-        const validatedData = DBDevicesArraySchema.parse(data ?? []);
-        // console.log("Validated data:", validatedData);
+        const validatedData = DBDevicesArraySchema.parse(data);
         setDevices(validatedData);
       } catch (validationError) {
         console.error("Validation error:", validationError);
@@ -104,7 +102,36 @@ export async function insertDevices(newDevice: DBDeviceType) {
 //   //   await axios.post(endpoints.key + endpoints.update, data);
 // }
 
-export async function handleUpdateRequest(
+export async function handleFlaskInsertRequest(deviceRequestData: any) {
+  try {
+    const response = await fetch(
+      env.NEXT_PUBLIC_APP_URL + ":3000/" + endpoints.key + endpoints.insert,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceRequestData }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const result = await response.json();
+    console.log("Success:", result);
+
+    await mutate(
+      env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list
+    );
+    window.location.reload();
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function handleFlaskUpdateRequest(
   selectedDeviceUID: string | undefined,
   deviceRequestData: any
 ) {
