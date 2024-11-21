@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ComportDeviceSchema, PyvisaDeviceSchema } from "@/db/zodDeviceSchema";
+import {
+  ComportDeviceSchema,
+  PyvisaDeviceSchema,
+} from "@/db/zod/zodDeviceSchema";
 
 const DBDeviceSchema = z.object({
   id: z.number(),

@@ -1,23 +1,56 @@
-import { Textarea } from "@nextui-org/input";
-import { useState, useMemo } from "react";
+import { Card, CardHeader, CardBody } from "@nextui-org/card";
+import { Divider } from "@nextui-org/divider";
+import { useEffect, useMemo, useRef } from "react";
 import { useSelectedKeysStore } from "../../config/store";
+import { EditorView, basicSetup } from "codemirror";
+import { yaml } from "@codemirror/lang-yaml";
+import { keymap } from "@codemirror/view";
+import { defaultKeymap, indentWithTab } from "@codemirror/commands";
+import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
 
 export default function InputArea() {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
+  const editorRef = useRef(null);
 
   const selectedValue = useMemo(
     () => Array.from(selectedKeys).join(", "),
     [selectedKeys]
   );
 
+  useEffect(() => {
+    if (editorRef.current) {
+      const view = new EditorView({
+        extensions: [
+          basicSetup,
+          yaml(),
+          keymap.of([...defaultKeymap, indentWithTab]), // Default keymap with indent using Tab
+          oneDark, // Apply the dark theme
+        ],
+        parent: editorRef.current,
+      });
+
+      return () => view.destroy();
+    }
+  }, []);
+
   return (
-    <div className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-4">
-      <Textarea
-        // minRows={2}
-        maxRows={30}
-        label={"Commands for " + selectedValue}
-        placeholder="Enter your device commands in YAML format"
-      />
+    <div className="flex flex-col gap-4 w-full mb-6">
+      <Card className="relative p-4">
+        <CardHeader className="flex justify-between">
+          <div className="text-lg font-semibold">{`Commands for ${selectedValue}`}</div>
+        </CardHeader>
+        <Divider />
+        <CardBody>
+          <div
+            ref={editorRef}
+            style={{
+              width: "100%",
+              height: "100%",
+              background: "transparent",
+            }}
+          />
+        </CardBody>
+      </Card>
     </div>
   );
 }

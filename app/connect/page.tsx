@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from "react";
 import DeviceCard from "@/components/connect/devicecard";
-// import { getDevices, getSimulationDevices } from "@/stores/useFlaskAPIStore";
 import { getSimulationDevices } from "@/stores/useFlaskAPIStore";
 import { useDBDeviceStore, useDBDevices } from "@/stores/useDeviceStore";
 import { Breadcrumbs, BreadcrumbItem } from "@nextui-org/breadcrumbs";
-import { type DeviceType, type DevicesArray } from "@/db/zodDeviceSchema";
-import { type DBDevicesArray } from "@/db/zodDBDeviceSchema";
+import { type DeviceType, type DevicesArray } from "@/db/zod/zodDeviceSchema";
+import { type DBDevicesArray } from "@/db/zod/zodDBDeviceSchema";
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
+import CustomModal from "@/components/modal";
 import {
   handleFlaskUpdateRequest,
   handleFlaskInsertRequest,
+  handleFlaskDeleteRequest,
 } from "@/stores/useDeviceStore";
 
 type SingleDevice = DeviceType extends Array<infer U> ? U : never;
@@ -21,7 +22,6 @@ type SingleDeviceField = {
 };
 
 type DBDeviceField = {
-  // id: number;
   uid: string;
   name: string;
   description: string;
@@ -47,12 +47,38 @@ function isPyvisaDevice(device: any): device is {
   return "IDN" in device;
 }
 
-export default function Connect() {
-  // from flask
-  // const { devices, connectDeviceToSSE } = getDevices();
-  const { devices, connectDeviceToSSE } = getSimulationDevices();
+interface additionalModalProps {
+  size:
+    | "xs"
+    | "sm"
+    | "md"
+    | "lg"
+    | "xl"
+    | "2xl"
+    | "3xl"
+    | "4xl"
+    | "5xl"
+    | "full";
+  isDismissable: boolean;
+  placement:
+    | "center"
+    | "auto"
+    | "top"
+    | "top-center"
+    | "bottom"
+    | "bottom-center";
+  backdrop: "transparent" | "opaque" | "blur";
+}
 
-  // db devices
+const modalConfig: additionalModalProps = {
+  size: "md",
+  isDismissable: true,
+  placement: "center",
+  backdrop: "opaque",
+};
+
+export default function Connect() {
+  const { devices, connectDeviceToSSE } = getSimulationDevices();
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
 
@@ -66,10 +92,39 @@ export default function Connect() {
   function compareDevices(
     device: SingleDevice,
     dbDevices: DBDevicesArray
-  ): [string, any, any] {
-    // console.log(device);
-    // console.log(dbDevices);
-    return ["Test", null, null];
+  ): string {
+    let deviceIdentifier: string | undefined;
+
+    if (isComportDevice(device)) {
+      deviceIdentifier = device.ID_SERIAL;
+    } else if (isPyvisaDevice(device)) {
+      deviceIdentifier = device.IDN;
+    } else {
+      return "Register Required";
+    }
+
+    const matchedDBDevice = findSelectedDBDevice(dbDevices, deviceIdentifier);
+
+    if (!matchedDBDevice || !matchedDBDevice.data) {
+      return "Register Required";
+    }
+
+    const dbData = matchedDBDevice.data;
+    const deviceKeys = Object.keys(device) as (keyof typeof device)[];
+    const dbDataKeys = Object.keys(dbData) as (keyof typeof dbData)[];
+
+    if (
+      deviceKeys.length === dbDataKeys.length &&
+      deviceKeys.every((key) => device[key] === dbData[key])
+    ) {
+      return "Exact";
+    }
+
+    if (deviceKeys.some((key) => device[key] !== dbData[key])) {
+      return "Update Required";
+    }
+
+    return "Register Required";
   }
 
   const [selectedDevice, setSelectedDevice] = useState<string | undefined>(
@@ -83,16 +138,22 @@ export default function Connect() {
   const [deviceRequestData, setDeviceRequestData] =
     useState<DBDeviceField | null>(null);
 
-  // useEffect(() => {
-  //   console.log(devices);
-  // }, [devices]);
-  useEffect(() => {
-    devices;
-    console.log(deviceRequestData);
-  }, [deviceRequestData]);
-  // useEffect(() => {
-  //   console.log(selectedDeviceUID);
-  // }, [selectedDeviceUID]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deviceToDelete, setDeviceToDelete] = useState<string | undefined>(
+    undefined
+  );
+
+  const handleDeleteClick = (deviceUID: string | undefined) => {
+    setDeviceToDelete(deviceUID);
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deviceToDelete) {
+      handleFlaskDeleteRequest(deviceToDelete);
+    }
+    setIsModalOpen(false);
+  };
 
   const findSelectedDevice = (
     devices: DevicesArray,
@@ -106,7 +167,7 @@ export default function Connect() {
         return device;
       }
     }
-    return null; // Return null if no matching device is found
+    return null;
   };
 
   const findSelectedDBDevice = (
@@ -122,7 +183,7 @@ export default function Connect() {
         return device;
       }
     }
-    return null; // Return null if no matching device is found
+    return null;
   };
 
   const handleInputChange = (key: string, value: string) => {
@@ -252,7 +313,6 @@ export default function Connect() {
                         type="text"
                         label={key}
                         variant="flat"
-                        // defaultValue={String(value)}
                         value={String(value)}
                         className="max-w-xs mb-4"
                         onChange={(e) =>
@@ -264,8 +324,12 @@ export default function Connect() {
                 </div>
               </div>
               <div className="flex justify-center gap-3">
+                <Button className="w-42" onClick={() => resetStates()}>
+                  Back
+                </Button>
                 <Button
                   className="w-42"
+                  color="warning"
                   onClick={() =>
                     copyDeviceToDBDeviceField(
                       selectedDeviceObject,
@@ -274,6 +338,13 @@ export default function Connect() {
                   }
                 >
                   Retrieve flask data
+                </Button>
+                <Button
+                  className="w-36"
+                  color="danger"
+                  onClick={() => handleDeleteClick(selectedDeviceUID)}
+                >
+                  Forget device
                 </Button>
                 <Button
                   className="w-24 "
@@ -328,30 +399,21 @@ export default function Connect() {
                     }
                   />
                 ))}
-              {/* {Object.entries(deviceRequestData?.data || {}).map(
-                ([key, value]) => (
-                  <Input
-                    key={key}
-                    type="text"
-                    label={key}
-                    variant="flat"
-                    // defaultValue={String(value)}
-                    value={String(value)}
-                    className="max-w-xs mb-4"
-                  />
-                )
-              )} */}
-              <Button
-                className="w-24 mx-auto"
-                onClick={() => handleFlaskInsertRequest(deviceRequestData)}
-              >
-                Register
-              </Button>
+              <div className="flex justify-center gap-3">
+                <Button className="w-42" onClick={() => resetStates()}>
+                  Back
+                </Button>
+                <Button
+                  className="w-24"
+                  onClick={() => handleFlaskInsertRequest(deviceRequestData)}
+                >
+                  Register
+                </Button>
+              </div>
             </div>
           );
         })()
-      ) : // from
-      devices.length > 0 ? (
+      ) : devices.length > 0 ? (
         devices.flat().map((device, index) => (
           <div
             key={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
@@ -369,9 +431,9 @@ export default function Connect() {
                 data={device}
                 name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
                 actionRequired={
-                  compareDevices(device, dbDevices)[0] === "Exact"
+                  compareDevices(device, dbDevices) === "Exact"
                     ? ""
-                    : compareDevices(device, dbDevices)[0]
+                    : compareDevices(device, dbDevices)
                 }
               />
             </div>
@@ -379,6 +441,24 @@ export default function Connect() {
         ))
       ) : (
         <p>No devices connected. {devices.length}</p>
+      )}
+
+      {isModalOpen && (
+        <CustomModal
+          {...modalConfig}
+          header={<h2>Confirm Delete</h2>}
+          body={<p>Are you sure you want to delete this device?</p>}
+          footer={
+            <>
+              <Button onPress={() => setIsModalOpen(false)}>Close</Button>
+              <Button color="danger" onPress={confirmDelete}>
+                Delete
+              </Button>
+            </>
+          }
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
       )}
     </div>
   );

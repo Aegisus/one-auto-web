@@ -8,7 +8,7 @@ import {
   DBDevicesArraySchema,
   DBDeviceState,
   type DBDevicesArray,
-} from "@/db/zodDBDeviceSchema";
+} from "@/db/zod/zodDBDeviceSchema";
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
@@ -52,37 +52,37 @@ export function useDBDevices() {
   return { isLoading, error, isValidating };
 }
 
-export async function insertDevices(newDevice: DBDeviceType) {
-  // to update local state based on key
-  const response = await fetch(
-    env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.insert,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newDevice),
-    }
-  );
+// export async function insertDevices(newDevice: DBDeviceType) {
+//   // to update local state based on key
+//   const response = await fetch(
+//     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.insert,
+//     {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(newDevice),
+//     }
+//   );
 
-  await mutate(
-    env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list,
-    () => {
-      return {
-        newDevice,
-      };
-    },
-    false
-  );
+//   await mutate(
+//     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list,
+//     () => {
+//       return {
+//         newDevice,
+//       };
+//     },
+//     false
+//   );
 
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
+//   if (!response.ok) {
+//     throw new Error("Network response was not ok");
+//   }
 
-  // const responseData = await response.json();
+//   // const responseData = await response.json();
 
-  // return responseData;
-}
+//   // return responseData;
+// }
 
 // export function updateDevice(updatedDevice: DBDeviceType) {
 //   // to update local state based on key
@@ -119,8 +119,8 @@ export async function handleFlaskInsertRequest(deviceRequestData: any) {
       throw new Error("Network response was not ok");
     }
 
-    const result = await response.json();
-    console.log("Success:", result);
+    // const result = await response.json();
+    // console.log("Success:", result);
 
     await mutate(
       env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list
@@ -151,8 +151,40 @@ export async function handleFlaskUpdateRequest(
       throw new Error("Network response was not ok");
     }
 
-    const result = await response.json();
-    console.log("Success:", result);
+    // const result = await response.json();
+    // console.log("Success:", result);
+
+    await mutate(
+      env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list
+    );
+    window.location.reload();
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function handleFlaskDeleteRequest(
+  selectedDeviceUID: string | undefined
+) {
+  try {
+    // console.log("selected device", selectedDeviceUID);
+    const response = await fetch(
+      env.NEXT_PUBLIC_APP_URL + ":3000/" + endpoints.key + endpoints.delete,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ selectedDeviceUID }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    // const result = await response.json();
+    // console.log("Success:", result);
 
     await mutate(
       env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list

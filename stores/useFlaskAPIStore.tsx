@@ -4,7 +4,7 @@ import {
   DeviceState,
   DeviceSchema,
   type DevicesArray,
-} from "@/db/zodDeviceSchema";
+} from "@/db/zod/zodDeviceSchema";
 
 export const getDevices = create<DeviceState>((set) => ({
   devices: [] as DevicesArray,

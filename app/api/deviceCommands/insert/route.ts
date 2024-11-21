@@ -1,44 +1,29 @@
 import { db } from "@/db/drizzle";
-import { device, deviceCommands } from "@/db/schema";
+import { deviceCommands } from "@/db/schema";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const registerRequest = await req.json();
-    const { deviceRequestData } = registerRequest;
+    const { deviceCommandInsertData } = await req.json();
 
     // Ensure all required fields are present
     if (
-      !deviceRequestData.uid ||
-      !deviceRequestData.name ||
-      !deviceRequestData.data
+      !deviceCommandInsertData.uid ||
+      !deviceCommandInsertData.name ||
+      !deviceCommandInsertData.commands
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
-
-    // Insert a new device entry
-    await db
-      .insert(device)
-      .values({
-        uid: deviceRequestData.uid,
-        name: deviceRequestData.name,
-        data: deviceRequestData.data,
-        description: deviceRequestData.description || "test",
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .execute();
-
     // Insert into deviceCommands table
     await db
       .insert(deviceCommands)
       .values({
-        uid: deviceRequestData.uid,
-        name: deviceRequestData.name,
-        commands: null,
+        uid: deviceCommandInsertData.uid,
+        name: deviceCommandInsertData.name,
+        commands: deviceCommandInsertData.commands,
       })
       .execute();
 

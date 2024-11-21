@@ -26,7 +26,7 @@ export const deviceCommands = oneAuto.table("device_commands", {
   id: serial("id").primaryKey(),
   uid: varchar("uid", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  commands: jsonb("commands").notNull(),
+  commands: jsonb("commands"),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });

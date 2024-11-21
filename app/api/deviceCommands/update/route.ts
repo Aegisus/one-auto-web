@@ -1,17 +1,17 @@
 import { db } from "@/db/drizzle";
-import { device, deviceCommands } from "@/db/schema";
+import { deviceCommands } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const { selectedDeviceUID, deviceRequestData } = await req.json();
+    const { updatedCommandsRequest } = await req.json();
 
     // Check if the device exists by UID
     const result = await db
       .select()
-      .from(device)
-      .where(eq(device.uid, selectedDeviceUID))
+      .from(deviceCommands)
+      .where(eq(deviceCommands.uid, updatedCommandsRequest.uid))
       .execute();
 
     if (result.length === 0) {
@@ -21,26 +21,12 @@ export async function POST(req: Request) {
     } else {
       // Device exists, update the entry
       await db
-        .update(device)
-        .set({
-          name: deviceRequestData.name,
-          data: deviceRequestData.data,
-          uid: deviceRequestData.uid,
-          description: deviceRequestData.description,
-          updated_at: new Date(),
-        })
-        .where(eq(device.uid, selectedDeviceUID))
-        .execute();
-
-      // Update the deviceCommands table
-      await db
         .update(deviceCommands)
         .set({
-          name: deviceRequestData.name,
-          uid: deviceRequestData.uid,
+          commands: updatedCommandsRequest.commands,
           updated_at: new Date(),
         })
-        .where(eq(deviceCommands.uid, selectedDeviceUID))
+        .where(eq(deviceCommands.uid, updatedCommandsRequest.uid))
         .execute();
 
       return NextResponse.json({
