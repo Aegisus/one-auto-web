@@ -9,7 +9,7 @@ export async function GET() {
   noStore();
   try {
     const allDeviceCommands = await db.select().from(deviceCommands);
-    // console.log(allDevice);
+    // console.log(allDeviceCommands);
     return new NextResponse(JSON.stringify(allDeviceCommands), {
       headers: {
         "Cache-Control": "no-store, must-revalidate", // Disable caching

@@ -44,7 +44,9 @@ export function useDeviceCommands() {
   useEffect(() => {
     if (data) {
       try {
+        // console.log(data);
         const validatedData = DeviceCommandsArraySchema.parse(data);
+        // console.log(validatedData);
         setDeviceCommands(validatedData);
       } catch (validationError) {
         console.error("Validation error:", validationError);
@@ -52,7 +54,7 @@ export function useDeviceCommands() {
     }
   }, [data, setDeviceCommands]);
 
-  return { isLoading, error, isValidating };
+  return { data, isLoading, error, isValidating };
 }
 
 export async function insertCommands(newCommands: DeviceCommandsType) {

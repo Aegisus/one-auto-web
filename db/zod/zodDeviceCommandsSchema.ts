@@ -4,7 +4,7 @@ const DeviceCommandsSchema = z.object({
   id: z.number(),
   uid: z.string(),
   name: z.string(),
-  commands: z.object({}).nullable(),
+  commands: z.union([z.object({}).passthrough(), z.null()]),
   created_at: z.nullable(z.string()),
   updated_at: z.nullable(z.string()),
 });

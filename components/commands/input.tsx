@@ -8,7 +8,11 @@ import { keymap } from "@codemirror/view";
 import { defaultKeymap, indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
 
-export default function InputArea() {
+interface InputAreaProps {
+  commands: string;
+}
+
+export default function InputArea({ commands }: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
   const editorRef = useRef(null);
 
@@ -20,6 +24,7 @@ export default function InputArea() {
   useEffect(() => {
     if (editorRef.current) {
       const view = new EditorView({
+        doc: commands,
         extensions: [
           basicSetup,
           yaml(),
@@ -31,7 +36,7 @@ export default function InputArea() {
 
       return () => view.destroy();
     }
-  }, []);
+  }, [commands]);
 
   return (
     <div className="flex flex-col gap-4 w-full mb-6">
