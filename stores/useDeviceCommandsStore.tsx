@@ -89,22 +89,32 @@ export async function insertCommands(newCommands: DeviceCommandsType) {
   // return responseData;
 }
 
-export function updateCommands(updatedCommands: DeviceCommandsType) {
-  // to update local state based on key
-  mutate(
-    env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.update,
-    () => {
-      return {
-        updatedCommands,
-      };
-    },
-    false
-  );
+export async function updateCommands(
+  deviceUID: string,
+  updatedCommands: object
+) {
+  try {
+    const response = await fetch(
+      env.NEXT_PUBLIC_APP_URL + ":3000/" + endpoints.key + endpoints.update,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceUID, updatedCommands }),
+      }
+    );
 
-  // to hit server
-  // you may need to refetch latest data after server hit and based on your logic
-  //   const data = { list: updatedCustomer };
-  //   await axios.post(endpoints.key + endpoints.update, data);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    await mutate(
+      env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list
+    );
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }
 
 export async function deleteCommands(deviceUID: string) {

@@ -5,13 +5,13 @@ import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const { updatedCommandsRequest } = await req.json();
+    const { deviceUID, updatedCommands } = await req.json();
 
     // Check if the device exists by UID
     const result = await db
       .select()
       .from(deviceCommands)
-      .where(eq(deviceCommands.uid, updatedCommandsRequest.uid))
+      .where(eq(deviceCommands.uid, deviceUID))
       .execute();
 
     if (result.length === 0) {
@@ -23,10 +23,10 @@ export async function POST(req: Request) {
       await db
         .update(deviceCommands)
         .set({
-          commands: updatedCommandsRequest.commands,
+          commands: updatedCommands,
           updated_at: new Date(),
         })
-        .where(eq(deviceCommands.uid, updatedCommandsRequest.uid))
+        .where(eq(deviceCommands.uid, deviceUID))
         .execute();
 
       return NextResponse.json({

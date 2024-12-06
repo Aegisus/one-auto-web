@@ -1,40 +1,96 @@
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Divider } from "@nextui-org/divider";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelectedKeysStore } from "../../config/store";
 import { EditorView, basicSetup } from "codemirror";
 import { yaml } from "@codemirror/lang-yaml";
 import { keymap } from "@codemirror/view";
 import { defaultKeymap, indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
+import Notifications from "@/components/commands/notifications";
+import { updateCommands } from "@/stores/useDeviceCommandsStore"; // Adjust the import according to your project structure
+import * as jsYaml from "js-yaml";
 
 interface InputAreaProps {
   commands: string;
+  setCommands: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export default function InputArea({ commands }: InputAreaProps) {
+export default function InputArea({ commands, setCommands }: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
-  const editorRef = useRef(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const [notification, setNotification] = useState<{
+    type: "success" | "fail" | "warning";
+    content: string;
+  } | null>(null);
 
   const selectedValue = useMemo(
     () => Array.from(selectedKeys).join(", "),
     [selectedKeys]
   );
 
+  function yamlToJson(yamlStr: string): object {
+    try {
+      const jsonObj = jsYaml.load(yamlStr) as object;
+      return jsonObj;
+    } catch (e) {
+      console.error("Error converting YAML to JSON:", e);
+      throw e;
+    }
+  }
+
+  const handleUpdateCommands = async () => {
+    try {
+      await updateCommands(selectedValue, yamlToJson(commands));
+      setNotification({
+        type: "success",
+        content: "Commands updated successfully",
+      });
+    } catch (error) {
+      setNotification({ type: "fail", content: "Failed to update commands" });
+    }
+  };
+
   useEffect(() => {
-    if (editorRef.current) {
-      const view = new EditorView({
+    if (editorRef.current && !viewRef.current) {
+      viewRef.current = new EditorView({
         doc: commands,
         extensions: [
           basicSetup,
           yaml(),
-          keymap.of([...defaultKeymap, indentWithTab]), // Default keymap with indent using Tab
+          keymap.of([
+            ...defaultKeymap,
+            indentWithTab,
+            {
+              key: "Ctrl-s",
+              run: () => {
+                handleUpdateCommands();
+                return true;
+              },
+            },
+          ]), // Default keymap with indent using Tab and Ctrl+S shortcut
           oneDark, // Apply the dark theme
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              setCommands(update.state.doc.toString());
+            }
+          }),
         ],
         parent: editorRef.current,
       });
+    }
+  }, [setCommands]);
 
-      return () => view.destroy();
+  useEffect(() => {
+    if (viewRef.current) {
+      const currentView = viewRef.current;
+      const currentDoc = currentView.state.doc.toString();
+      if (currentDoc !== commands) {
+        currentView.dispatch({
+          changes: { from: 0, to: currentDoc.length, insert: commands },
+        });
+      }
     }
   }, [commands]);
 
@@ -56,6 +112,13 @@ export default function InputArea({ commands }: InputAreaProps) {
           />
         </CardBody>
       </Card>
+      {notification && (
+        <Notifications
+          type={notification.type}
+          content={notification.content}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }
