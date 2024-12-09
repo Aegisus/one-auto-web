@@ -100,9 +100,9 @@ export default function DeviceCommands() {
     setDeviceCommand(command);
   }, [selectedKeysString, deviceCommands]);
 
-  useEffect(() => {
-    console.log(selectedKeysString);
-  }, [selectedKeysString]);
+  // useEffect(() => {
+  //   console.log(selectedKeysString);
+  // }, [selectedKeysString]);
 
   return (
     <div className="flex gap-x-5">

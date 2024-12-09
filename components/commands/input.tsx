@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Divider } from "@nextui-org/divider";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSelectedKeysStore } from "../../config/store";
 import { EditorView, basicSetup } from "codemirror";
 import { yaml } from "@codemirror/lang-yaml";
@@ -16,6 +16,15 @@ interface InputAreaProps {
   setCommands: React.Dispatch<React.SetStateAction<string>>;
 }
 
+function yamlToJson(yamlStr: string): object {
+  try {
+    const jsonObj = jsYaml.load(yamlStr) as object;
+    return jsonObj;
+  } catch (e) {
+    console.error("Error converting YAML to JSON:", e);
+    throw e;
+  }
+}
 export default function InputArea({ commands, setCommands }: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -30,19 +39,22 @@ export default function InputArea({ commands, setCommands }: InputAreaProps) {
     [selectedKeys]
   );
 
-  function yamlToJson(yamlStr: string): object {
-    try {
-      const jsonObj = jsYaml.load(yamlStr) as object;
-      return jsonObj;
-    } catch (e) {
-      console.error("Error converting YAML to JSON:", e);
-      throw e;
-    }
-  }
+  const selectedValueRef = useRef(selectedValue);
+  const commandsRef = useRef(commands);
 
-  const handleUpdateCommands = async () => {
+  useEffect(() => {
+    selectedValueRef.current = selectedValue;
+  }, [selectedValue]);
+
+  useEffect(() => {
+    commandsRef.current = commands;
+  }, [commands]);
+
+  const handleUpdateCommands = useCallback(async () => {
+    const currentSelectedValue = selectedValueRef.current;
+    const currentCommands = commandsRef.current;
     try {
-      await updateCommands(selectedValue, yamlToJson(commands));
+      await updateCommands(currentSelectedValue, yamlToJson(currentCommands));
       setNotification({
         type: "success",
         content: "Commands updated successfully",
@@ -50,7 +62,7 @@ export default function InputArea({ commands, setCommands }: InputAreaProps) {
     } catch (error) {
       setNotification({ type: "fail", content: "Failed to update commands" });
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (editorRef.current && !viewRef.current) {
@@ -80,7 +92,7 @@ export default function InputArea({ commands, setCommands }: InputAreaProps) {
         parent: editorRef.current,
       });
     }
-  }, [setCommands]);
+  }, [setCommands, handleUpdateCommands]);
 
   useEffect(() => {
     if (viewRef.current) {
