@@ -4,31 +4,31 @@ import useSWR, { mutate } from "swr";
 import { env } from "@/env.mjs";
 import axios from "axios";
 import {
-  type DeviceCommandsType,
-  type DeviceCommandsArray,
-  DeviceCommandsState,
-  DeviceCommandsArraySchema,
-} from "@/db/zod/zodDeviceCommandsSchema";
+  type DeviceFunctionsType,
+  type DeviceFunctionsArray,
+  DeviceFunctionsState,
+  DeviceFunctionsArraySchema,
+} from "@/db/zod/zodDeviceFunctionsSchema";
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export const endpoints = {
-  key: "api/deviceCommands",
+  key: "api/deviceFunctions",
   list: "/get", // server URL
   insert: "/insert", // server URL
   update: "/update", // server URL
   delete: "/delete", // server URL
 };
 
-export const useDeviceCommandsStore = create<DeviceCommandsState>((set) => ({
-  deviceCommands: [] as DeviceCommandsArray,
-  setDeviceCommands: (deviceCommands: DeviceCommandsArray) =>
-    set({ deviceCommands }),
+export const useDeviceFunctionsStore = create<DeviceFunctionsState>((set) => ({
+  deviceFunctions: [] as DeviceFunctionsArray,
+  setDeviceFunctions: (deviceFunctions: DeviceFunctionsArray) =>
+    set({ deviceFunctions }),
 }));
 
-export function useDeviceCommands() {
-  const setDeviceCommands = useDeviceCommandsStore(
-    (state) => state.setDeviceCommands
+export function useDeviceFunctions() {
+  const setDeviceFunctions = useDeviceFunctionsStore(
+    (state) => state.setDeviceFunctions
   );
 
   const { data, isLoading, error, isValidating } = useSWR(
@@ -45,19 +45,19 @@ export function useDeviceCommands() {
     if (data) {
       try {
         // console.log(data);
-        const validatedData = DeviceCommandsArraySchema.parse(data);
+        const validatedData = DeviceFunctionsArraySchema.parse(data);
         // console.log(validatedData);
-        setDeviceCommands(validatedData);
+        setDeviceFunctions(validatedData);
       } catch (validationError) {
         console.error("Validation error:", validationError);
       }
     }
-  }, [data, setDeviceCommands]);
+  }, [data, setDeviceFunctions]);
 
   return { data, isLoading, error, isValidating };
 }
 
-export async function insertCommands(newCommands: DeviceCommandsType) {
+export async function insertCommands(newFunctions: DeviceFunctionsType) {
   // to update local state based on key
   const response = await fetch(
     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.insert,
@@ -66,7 +66,7 @@ export async function insertCommands(newCommands: DeviceCommandsType) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(newCommands),
+      body: JSON.stringify(newFunctions),
     }
   );
 
@@ -74,7 +74,7 @@ export async function insertCommands(newCommands: DeviceCommandsType) {
     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.list,
     () => {
       return {
-        newCommands,
+        newFunctions,
       };
     },
     false
@@ -89,9 +89,9 @@ export async function insertCommands(newCommands: DeviceCommandsType) {
   // return responseData;
 }
 
-export async function updateCommands(
+export async function updateFunctions(
   deviceUID: string,
-  updatedCommands: object
+  updatedFunctions: object
 ) {
   try {
     const response = await fetch(
@@ -101,7 +101,7 @@ export async function updateCommands(
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ deviceUID, updatedCommands }),
+        body: JSON.stringify({ deviceUID, updatedFunctions }),
       }
     );
 
@@ -117,7 +117,7 @@ export async function updateCommands(
   }
 }
 
-export async function deleteCommands(deviceUID: string) {
+export async function deleteFunctions(deviceUID: string) {
   // to update local state based on key
   const response = await fetch(
     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.delete,

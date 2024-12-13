@@ -1,16 +1,16 @@
 import { db } from "@/db/drizzle";
-import { deviceCommands } from "@/db/schema";
+import { deviceFunctions } from "@/db/schema";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { deviceCommandInsertData } = await req.json();
+    const { deviceFunctionInsertData } = await req.json();
 
     // Ensure all required fields are present
     if (
-      !deviceCommandInsertData.uid ||
-      !deviceCommandInsertData.name ||
-      !deviceCommandInsertData.commands
+      !deviceFunctionInsertData.uid ||
+      !deviceFunctionInsertData.name ||
+      !deviceFunctionInsertData.commands
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -19,11 +19,11 @@ export async function POST(req: Request) {
     }
     // Insert into deviceCommands table
     await db
-      .insert(deviceCommands)
+      .insert(deviceFunctions)
       .values({
-        uid: deviceCommandInsertData.uid,
-        name: deviceCommandInsertData.name,
-        commands: deviceCommandInsertData.commands,
+        uid: deviceFunctionInsertData.uid,
+        name: deviceFunctionInsertData.name,
+        functions: deviceFunctionInsertData.functions,
       })
       .execute();
 

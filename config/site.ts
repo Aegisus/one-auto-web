@@ -9,12 +9,12 @@ export const siteConfig = {
       href: "/",
     },
     {
-      label: "Connect Device",
+      label: "Connect",
       href: "/connect",
     },
     {
-      label: "Device Commands",
-      href: "/commands",
+      label: "Device",
+      href: "/device",
     },
   ],
   // navMenuItems: [

@@ -7,13 +7,13 @@ import { yaml } from "@codemirror/lang-yaml";
 import { keymap } from "@codemirror/view";
 import { defaultKeymap, indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
-import Notifications from "@/components/commands/notifications";
-import { updateCommands } from "@/stores/useDeviceCommandsStore"; // Adjust the import according to your project structure
+import Notifications from "@/components/device/notifications";
+import { updateFunctions } from "@/stores/useDeviceFunctionsStore"; // Adjust the import according to your project structure
 import * as jsYaml from "js-yaml";
 
 interface InputAreaProps {
-  commands: string;
-  setCommands: React.Dispatch<React.SetStateAction<string>>;
+  functions: string;
+  setFunctions: React.Dispatch<React.SetStateAction<string>>;
 }
 
 function yamlToJson(yamlStr: string): object {
@@ -25,7 +25,10 @@ function yamlToJson(yamlStr: string): object {
     throw e;
   }
 }
-export default function InputArea({ commands, setCommands }: InputAreaProps) {
+export default function FunctionInputArea({
+  functions,
+  setFunctions,
+}: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -40,34 +43,34 @@ export default function InputArea({ commands, setCommands }: InputAreaProps) {
   );
 
   const selectedValueRef = useRef(selectedValue);
-  const commandsRef = useRef(commands);
+  const commandsRef = useRef(functions);
 
   useEffect(() => {
     selectedValueRef.current = selectedValue;
   }, [selectedValue]);
 
   useEffect(() => {
-    commandsRef.current = commands;
-  }, [commands]);
+    commandsRef.current = functions;
+  }, [functions]);
 
-  const handleUpdateCommands = useCallback(async () => {
+  const handleUpdateFunctions = useCallback(async () => {
     const currentSelectedValue = selectedValueRef.current;
-    const currentCommands = commandsRef.current;
+    const currentFunctions = commandsRef.current;
     try {
-      await updateCommands(currentSelectedValue, yamlToJson(currentCommands));
+      await updateFunctions(currentSelectedValue, yamlToJson(currentFunctions));
       setNotification({
         type: "success",
-        content: "Commands updated successfully",
+        content: "Functions updated successfully",
       });
     } catch (error) {
-      setNotification({ type: "fail", content: "Failed to update commands" });
+      setNotification({ type: "fail", content: "Failed to update functions" });
     }
   }, []);
 
   useEffect(() => {
     if (editorRef.current && !viewRef.current) {
       viewRef.current = new EditorView({
-        doc: commands,
+        doc: functions,
         extensions: [
           basicSetup,
           yaml(),
@@ -77,7 +80,7 @@ export default function InputArea({ commands, setCommands }: InputAreaProps) {
             {
               key: "Ctrl-s",
               run: () => {
-                handleUpdateCommands();
+                handleUpdateFunctions();
                 return true;
               },
             },
@@ -85,32 +88,32 @@ export default function InputArea({ commands, setCommands }: InputAreaProps) {
           oneDark, // Apply the dark theme
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-              setCommands(update.state.doc.toString());
+              setFunctions(update.state.doc.toString());
             }
           }),
         ],
         parent: editorRef.current,
       });
     }
-  }, [setCommands, handleUpdateCommands]);
+  }, [setFunctions, handleUpdateFunctions]);
 
   useEffect(() => {
     if (viewRef.current) {
       const currentView = viewRef.current;
       const currentDoc = currentView.state.doc.toString();
-      if (currentDoc !== commands) {
+      if (currentDoc !== functions) {
         currentView.dispatch({
-          changes: { from: 0, to: currentDoc.length, insert: commands },
+          changes: { from: 0, to: currentDoc.length, insert: functions },
         });
       }
     }
-  }, [commands]);
+  }, [functions]);
 
   return (
     <div className="flex flex-col gap-4 w-full mb-6">
       <Card className="relative p-4">
         <CardHeader className="flex justify-between">
-          <div className="text-lg font-semibold">{`Commands for ${selectedValue}`}</div>
+          <div className="text-lg font-semibold">{`Functions for ${selectedValue}`}</div>
         </CardHeader>
         <Divider />
         <CardBody>

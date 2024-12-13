@@ -1,24 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
-import ListBox from "../../components/commands/listbox";
-import InputArea from "../../components/commands/input";
+import ListBox from "../../components/device/listbox";
+import InputArea from "../../components/device/functionInput";
 import { Button } from "@nextui-org/button";
 import {
-  useDeviceCommandsStore,
-  useDeviceCommands,
-  updateCommands,
-} from "@/stores/useDeviceCommandsStore";
+  useDeviceFunctionsStore,
+  useDeviceFunctions,
+  updateFunctions,
+} from "@/stores/useDeviceFunctionsStore";
 import { useSelectedKeysStore } from "@/config/store";
-import { type DeviceCommandsArray } from "@/db/zod/zodDeviceCommandsSchema";
-import type { ItemListType } from "@/components/commands/listbox";
-import Notifications from "@/components/commands/notifications";
+import { type DeviceFunctionsArray } from "@/db/zod/zodDeviceFunctionsSchema";
+import type { ItemListType } from "@/components/device/listbox";
+import Notifications from "@/components/device/notifications";
 import * as jsYaml from "js-yaml";
 
 function convertDevicesToListBoxItems(
-  deviceCommands: DeviceCommandsArray
+  deviceFunctions: DeviceFunctionsArray
 ): ItemListType {
-  const listBoxItems: ItemListType = deviceCommands.map((deviceCommand) => {
-    return { key: deviceCommand.uid, value: deviceCommand.name };
+  const listBoxItems: ItemListType = deviceFunctions.map((deviceFunction) => {
+    return { key: deviceFunction.uid, value: deviceFunction.name };
   });
 
   return listBoxItems;
@@ -44,36 +44,36 @@ function yamlToJson(yamlStr: string): object {
   }
 }
 
-function getDeviceCommandbyUID(
+function getDeviceFunctionsbyUID(
   uid: string,
-  deviceCommands: DeviceCommandsArray
+  deviceFunctions: DeviceFunctionsArray
 ): string {
   // console.log(uid);
-  // console.log(deviceCommands);
-  const deviceCommand = deviceCommands.find(
-    (deviceCommand) => deviceCommand.uid === uid
+  // console.log(deviceFunctions);
+  const deviceFunction = deviceFunctions.find(
+    (deviceFunction) => deviceFunction.uid === uid
   );
 
-  return deviceCommand?.commands == undefined
+  return deviceFunction?.functions == undefined
     ? ""
-    : jsonToYaml(deviceCommand.commands);
+    : jsonToYaml(deviceFunction.functions);
 }
 
-export default function DeviceCommands() {
+export default function DeviceFunctions() {
   const [notification, setNotification] = useState<{
     type: "success" | "fail" | "warning";
     content: string;
   } | null>(null);
 
-  const handleUpdateCommands = async () => {
+  const handleUpdateFunctions = async () => {
     try {
-      await updateCommands(selectedKeysString, yamlToJson(deviceCommand));
+      await updateFunctions(selectedKeysString, yamlToJson(deviceFunction));
       setNotification({
         type: "success",
-        content: "Commands updated successfully",
+        content: "Functions updated successfully",
       });
     } catch (error) {
-      setNotification({ type: "fail", content: "Failed to update commands" });
+      setNotification({ type: "fail", content: "Failed to update functions" });
     }
   };
 
@@ -81,24 +81,27 @@ export default function DeviceCommands() {
     setNotification(null);
   };
 
-  const { isLoading, error, isValidating } = useDeviceCommands();
-  const { deviceCommands } = useDeviceCommandsStore();
+  const { isLoading, error, isValidating } = useDeviceFunctions();
+  const { deviceFunctions } = useDeviceFunctionsStore();
   // useEffect(() => {
-  //   console.log("deviceCommands database:", deviceCommands);
-  // }, [deviceCommands]);
-  const listBoxItems = convertDevicesToListBoxItems(deviceCommands);
+  //   console.log("deviceFunctions database:", deviceFunctions);
+  // }, [deviceFunctions]);
+  const listBoxItems = convertDevicesToListBoxItems(deviceFunctions);
 
   // selected device uid
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
   const selectedKeysString = Array.from(selectedKeys).join(", ");
 
   // get single object by device uid
-  const [deviceCommand, setDeviceCommand] = useState("");
+  const [deviceFunction, setDeviceFunction] = useState("");
 
   useEffect(() => {
-    const command = getDeviceCommandbyUID(selectedKeysString, deviceCommands);
-    setDeviceCommand(command);
-  }, [selectedKeysString, deviceCommands]);
+    const deviceFunction = getDeviceFunctionsbyUID(
+      selectedKeysString,
+      deviceFunctions
+    );
+    setDeviceFunction(deviceFunction);
+  }, [selectedKeysString, deviceFunctions]);
 
   // useEffect(() => {
   //   console.log(selectedKeysString);
@@ -111,9 +114,12 @@ export default function DeviceCommands() {
         <h2>Please select a device</h2>
       ) : (
         <div className="w-full">
-          <InputArea commands={deviceCommand} setCommands={setDeviceCommand} />
+          <InputArea
+            functions={deviceFunction}
+            setFunctions={setDeviceFunction}
+          />
           <div className="flex justify-center">
-            <Button onClick={handleUpdateCommands} className="w-46">
+            <Button onClick={handleUpdateFunctions} className="w-46">
               Save
             </Button>
           </div>

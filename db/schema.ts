@@ -21,12 +21,12 @@ export const device = oneAuto.table("device", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Define the "device_commands" table within the schema
-export const deviceCommands = oneAuto.table("device_commands", {
+// Define the "device_functions" table within the schema
+export const deviceFunctions = oneAuto.table("device_functions", {
   id: serial("id").primaryKey(),
   uid: varchar("uid", { length: 255 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  commands: jsonb("commands"),
+  functions: jsonb("functions"),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
