@@ -61,7 +61,7 @@ const createESFlaskDevice = (
   onMessage: (data: any) => void,
   onError: (error: any) => void
 ) => {
-  const url = `${env.NEXT_PUBLIC_APP_URL}:3000/api/flaskAPI?device=${deviceType}`;
+  const url = `${env.NEXT_PUBLIC_APP_URL}:3000/api/flaskAPI/getDevices?device=${deviceType}`;
   const eventSource = new EventSource(url);
 
   eventSource.onmessage = (event) => {
@@ -87,7 +87,7 @@ const createESSimFlaskDevice = (
   onMessage: (data: any) => void,
   onError: (error: any) => void
 ) => {
-  const url = `${env.NEXT_PUBLIC_APP_URL}:3000/api/flaskAPISimulation`;
+  const url = `${env.NEXT_PUBLIC_APP_URL}:3000/api/flaskAPISimulation/getDevices`;
   const eventSource = new EventSource(url);
 
   eventSource.onmessage = (event) => {
