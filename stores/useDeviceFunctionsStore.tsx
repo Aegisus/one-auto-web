@@ -57,7 +57,7 @@ export function useDeviceFunctions() {
   return { data, isLoading, error, isValidating };
 }
 
-export async function insertCommands(newFunctions: DeviceFunctionsType) {
+export async function insertFunctions(newFunctions: DeviceFunctionsType) {
   // to update local state based on key
   const response = await fetch(
     env.NEXT_PUBLIC_APP_URL + "/" + endpoints.key + endpoints.insert,

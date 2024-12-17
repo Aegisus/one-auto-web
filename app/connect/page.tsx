@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DeviceCard from "@/components/connect/devicecard";
-import { getSimulationDevices } from "@/stores/useFlaskAPIStore";
+import { getSimulationDevices, getDevices } from "@/stores/useFlaskAPIStore";
 import { useDBDeviceStore, useDBDevices } from "@/stores/useDeviceStore";
 import { Breadcrumbs, BreadcrumbItem } from "@nextui-org/breadcrumbs";
 import { type DeviceType, type DevicesArray } from "@/db/zod/zodDeviceSchema";
@@ -78,7 +78,8 @@ const modalConfig: additionalModalProps = {
 };
 
 export default function Connect() {
-  const { devices, connectDeviceToSSE } = getSimulationDevices();
+  // const { devices, connectDeviceToSSE } = getSimulationDevices();
+  const { devices, connectDeviceToSSE } = getDevices();
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
 

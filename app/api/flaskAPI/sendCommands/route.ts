@@ -8,9 +8,18 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const { address, content, deviceType } = body;
+    const endpoint =
+      deviceType === "pyvisa" ? "pyvisa_command" : "comport_command";
+    // console.log(deviceType);
+    const payload =
+      deviceType === "pyvisa"
+        ? { address, command: content }
+        : { port: address, command: content };
+
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_APP_URL}:${process.env.FLASK_API_PORT}/run_script`,
-      body,
+      `${process.env.NEXT_PUBLIC_APP_URL}:${process.env.FLASK_API_PORT}/${endpoint}`,
+      payload,
       {
         headers: {
           "Content-Type": "application/json",

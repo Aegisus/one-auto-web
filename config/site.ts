@@ -16,6 +16,10 @@ export const siteConfig = {
       label: "Device",
       href: "/device",
     },
+    {
+      label: "Send Commands",
+      href: "/sendCommands",
+    },
   ],
   // navMenuItems: [
   //   {
