@@ -1,36 +1,32 @@
 import { db } from "@/db/drizzle";
-import { deviceFunctions } from "@/db/schema";
+import { deviceActions } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const { deviceUID, updatedFunctions } = await req.json();
-
+    const { selectedDeviceUID } = await req.json();
     // Check if the device exists by UID
     const result = await db
       .select()
-      .from(deviceFunctions)
-      .where(eq(deviceFunctions.uid, deviceUID))
+      .from(deviceActions)
+      .where(eq(deviceActions.uid, selectedDeviceUID))
       .execute();
 
     if (result.length === 0) {
       return NextResponse.json({
-        message: "Device not found. Cannot update non-existent device.",
+        message: "Device not found. Cannot delete non-existent device.",
       });
     } else {
-      // Device exists, update the entry
+      // Device exists, delete the entry
       await db
-        .update(deviceFunctions)
-        .set({
-          functions: updatedFunctions,
-          updated_at: new Date(),
-        })
-        .where(eq(deviceFunctions.uid, deviceUID))
+        .delete(deviceActions)
+        .where(eq(deviceActions.uid, selectedDeviceUID))
         .execute();
 
       return NextResponse.json({
-        message: "Device entry and commands updated successfully.",
+        message:
+          "Device entry and corresponding commands deleted successfully.",
       });
     }
   } catch (err) {

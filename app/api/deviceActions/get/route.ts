@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { deviceFunctions } from "@/db/schema";
+import { deviceActions } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 
@@ -8,9 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   noStore();
   try {
-    const allDeviceFunctions = await db.select().from(deviceFunctions);
-    // console.log(allDeviceCommands);
-    return new NextResponse(JSON.stringify(allDeviceFunctions), {
+    const allDeviceActions = await db.select().from(deviceActions);
+    return new NextResponse(JSON.stringify(allDeviceActions), {
       headers: {
         "Cache-Control": "no-store, must-revalidate", // Disable caching
         Pragma: "no-cache", // HTTP 1.0 backward compatibility

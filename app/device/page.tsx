@@ -1,24 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
 import ListBox from "../../components/device/listbox";
-import InputArea from "../../components/device/functionInput";
+import FunctionsInputArea from "../../components/device/functionsInput";
+import CommandsInputArea from "../../components/device/commandsInput";
 import { Button } from "@nextui-org/button";
 import {
-  useDeviceFunctionsStore,
-  useDeviceFunctions,
+  useDeviceActionsStore,
+  useDeviceActions,
   updateFunctions,
-} from "@/stores/useDeviceFunctionsStore";
+  updateCommands,
+} from "@/stores/useDeviceActionsStore";
 import { useSelectedKeysStore } from "@/config/store";
-import { type DeviceFunctionsArray } from "@/db/zod/zodDeviceFunctionsSchema";
+import { type DeviceActionsArray } from "@/db/zod/zodDeviceActionsSchema";
 import type { ItemListType } from "@/components/device/listbox";
 import Notifications from "@/components/device/notifications";
 import * as jsYaml from "js-yaml";
 
 function convertDevicesToListBoxItems(
-  deviceFunctions: DeviceFunctionsArray
+  deviceActions: DeviceActionsArray
 ): ItemListType {
-  const listBoxItems: ItemListType = deviceFunctions.map((deviceFunction) => {
-    return { key: deviceFunction.uid, value: deviceFunction.name };
+  const listBoxItems: ItemListType = deviceActions.map((deviceAction) => {
+    return { key: deviceAction.uid, value: deviceAction.name };
   });
 
   return listBoxItems;
@@ -46,62 +48,98 @@ function yamlToJson(yamlStr: string): object {
 
 function getDeviceFunctionsbyUID(
   uid: string,
-  deviceFunctions: DeviceFunctionsArray
+  deviceActions: DeviceActionsArray
 ): string {
   // console.log(uid);
-  // console.log(deviceFunctions);
-  const deviceFunction = deviceFunctions.find(
-    (deviceFunction) => deviceFunction.uid === uid
+  // console.log(deviceActions);
+  const deviceAction = deviceActions.find(
+    (deviceAction) => deviceAction.uid === uid
   );
 
-  return deviceFunction?.functions == undefined
+  return deviceAction?.functions == undefined
     ? ""
-    : jsonToYaml(deviceFunction.functions);
+    : jsonToYaml(deviceAction.functions);
 }
 
-export default function DeviceFunctions() {
+function getDeviceCommandsbyUID(
+  uid: string,
+  deviceActions: DeviceActionsArray
+): string {
+  // console.log(uid);
+  // console.log(deviceActions);
+  const deviceAction = deviceActions.find(
+    (deviceAction) => deviceAction.uid === uid
+  );
+
+  return deviceAction?.commands == undefined
+    ? ""
+    : jsonToYaml(deviceAction.commands);
+}
+
+export default function DeviceActions() {
   const [notification, setNotification] = useState<{
     type: "success" | "fail" | "warning";
     content: string;
   } | null>(null);
 
+  const handleCloseNotification = () => {
+    setNotification(null);
+  };
+
   const handleUpdateFunctions = async () => {
     try {
-      await updateFunctions(selectedKeysString, yamlToJson(deviceFunction));
+      await updateFunctions(selectedKeysString, yamlToJson(deviceFunctions));
       setNotification({
         type: "success",
         content: "Functions updated successfully",
       });
     } catch (error) {
-      setNotification({ type: "fail", content: "Failed to update functions" });
+      setNotification({ type: "fail", content: "Failed to update Functions" });
     }
   };
 
-  const handleCloseNotification = () => {
-    setNotification(null);
+  const handleUpdateCommands = async () => {
+    try {
+      await updateCommands(selectedKeysString, yamlToJson(deviceCommands));
+      setNotification({
+        type: "success",
+        content: "Commands updated successfully",
+      });
+    } catch (error) {
+      setNotification({ type: "fail", content: "Failed to update Commands" });
+    }
   };
 
-  const { isLoading, error, isValidating } = useDeviceFunctions();
-  const { deviceFunctions } = useDeviceFunctionsStore();
+  const { isLoading, error, isValidating } = useDeviceActions();
+  const { deviceActions } = useDeviceActionsStore();
   // useEffect(() => {
-  //   console.log("deviceFunctions database:", deviceFunctions);
-  // }, [deviceFunctions]);
-  const listBoxItems = convertDevicesToListBoxItems(deviceFunctions);
+  //   console.log("deviceActions database:", deviceActions);
+  // }, [deviceActions]);
+  const listBoxItems = convertDevicesToListBoxItems(deviceActions);
 
   // selected device uid
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
   const selectedKeysString = Array.from(selectedKeys).join(", ");
 
   // get single object by device uid
-  const [deviceFunction, setDeviceFunction] = useState("");
+  const [deviceFunctions, setDeviceFunctions] = useState("");
+  const [deviceCommands, setDeviceCommands] = useState("");
 
   useEffect(() => {
-    const deviceFunction = getDeviceFunctionsbyUID(
+    const deviceFunctions = getDeviceFunctionsbyUID(
       selectedKeysString,
-      deviceFunctions
+      deviceActions
     );
-    setDeviceFunction(deviceFunction);
-  }, [selectedKeysString, deviceFunctions]);
+    setDeviceFunctions(deviceFunctions);
+  }, [selectedKeysString, deviceActions]);
+
+  useEffect(() => {
+    const deviceCommands = getDeviceCommandsbyUID(
+      selectedKeysString,
+      deviceActions
+    );
+    setDeviceCommands(deviceCommands);
+  }, [selectedKeysString, deviceActions]);
 
   // useEffect(() => {
   //   console.log(selectedKeysString);
@@ -114,12 +152,21 @@ export default function DeviceFunctions() {
         <h2>Please select a device</h2>
       ) : (
         <div className="w-full">
-          <InputArea
-            functions={deviceFunction}
-            setFunctions={setDeviceFunction}
+          <FunctionsInputArea
+            functions={deviceFunctions}
+            setFunctions={setDeviceFunctions}
+          />
+          <div className="flex justify-center mb-5">
+            <Button onClick={handleUpdateFunctions} className="w-46">
+              Save
+            </Button>
+          </div>
+          <CommandsInputArea
+            commands={deviceCommands}
+            setCommands={setDeviceCommands}
           />
           <div className="flex justify-center">
-            <Button onClick={handleUpdateFunctions} className="w-46">
+            <Button onClick={handleUpdateCommands} className="w-46">
               Save
             </Button>
           </div>
