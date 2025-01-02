@@ -40,7 +40,7 @@ export default function Notifications({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="fixed bottom-4 right-4"
+      className="fixed bottom-4 right-4 z-10"
     >
       <Badge
         color={badgeColor}
