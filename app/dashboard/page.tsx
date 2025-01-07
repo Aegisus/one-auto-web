@@ -60,7 +60,7 @@ const DashboardPage: React.FC = () => {
       console.error("Parsed actions are not in an array format.");
       return null;
     }
-
+    // console.log(parsedActions);
     return (
       <div>
         <h2 className="text-xl font-semibold mb-4">Device Actions Dashboard</h2>
@@ -86,103 +86,80 @@ const DashboardPage: React.FC = () => {
                           {variableName}
                         </label>
                         {variableName === "limits" &&
-                        typeof variableValue === "object" &&
-                        variableValue !== null &&
-                        "lower" in variableValue &&
-                        "upper" in variableValue ? (
-                          <div className="flex justify-center gap-x-3">
+                          typeof variableValue === "object" &&
+                          variableValue !== null &&
+                          "lower" in variableValue &&
+                          "upper" in variableValue && (
+                            <div className="flex justify-center gap-x-3">
+                              <input
+                                type="number"
+                                id="lower"
+                                name="lower"
+                                defaultValue={variableValue.lower}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                              />
+                              <input
+                                type="number"
+                                id="upper"
+                                name="upper"
+                                defaultValue={variableValue.upper}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                              />
+                            </div>
+                          )}
+                        {variableName !== "limits" &&
+                          variableValue !== null && (
                             <input
-                              type="number"
-                              id="lower"
-                              name="lower"
-                              defaultValue={variableValue.lower}
+                              type="text"
+                              id={
+                                action.name.toLowerCase() +
+                                "_" +
+                                variableName.toLowerCase() +
+                                "_value"
+                              }
+                              name={
+                                action.name.toLowerCase() +
+                                "_" +
+                                variableName.toLowerCase() +
+                                "_value"
+                              }
+                              //   defaultValue={variableValue}
                               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
-                            <input
-                              type="number"
-                              id="upper"
-                              name="upper"
-                              defaultValue={variableValue.upper}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <input
-                            type="text"
-                            id={variableName}
-                            name={variableName}
-                            defaultValue={variableValue}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          />
-                        )}
+                          )}
                       </div>
                     );
                   }
                 )}
-              {deviceStates[action.name] === "set" ? (
+              {deviceStates[action.name] === "set" && (
                 <div>
                   <label
                     htmlFor="Value"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Value
+                    Set Value
                   </label>
                   <input
                     type="text"
-                    id="value"
-                    name="value"
+                    id={action.name.toLowerCase() + "_set_value"}
+                    name={action.name.toLowerCase() + "_set_value"}
                     //   defaultValue={variableValue}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   />
                 </div>
-              ) : (
+              )}
+              {deviceStates[action.name] === "loop" && (
                 <div>
                   <label
-                    htmlFor="Start"
+                    htmlFor="Value"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Start
+                    Loop Value
                   </label>
                   <input
-                    type="number"
-                    id="start"
-                    name="start"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                  <label
-                    htmlFor="End"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    End
-                  </label>
-                  <input
-                    type="number"
-                    id="end"
-                    name="end"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                  <label
-                    htmlFor="Delay"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Delay
-                  </label>
-                  <input
-                    type="number"
-                    id="delay"
-                    name="Delay"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                  <label
-                    htmlFor="Step Size"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Step Size
-                  </label>
-                  <input
-                    type="number"
-                    id="step_size"
-                    name="step_size"
+                    type="text"
+                    id={action.name.toLowerCase() + "_loop_value"}
+                    name={action.name.toLowerCase() + "_loop_value"}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   />
                 </div>

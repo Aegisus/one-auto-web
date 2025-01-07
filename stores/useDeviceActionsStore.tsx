@@ -54,6 +54,8 @@ export function useDeviceActions() {
     }
   }, [data, setDeviceActions]);
 
+  // console.log(data);
+
   return { data, isLoading, error, isValidating };
 }
 

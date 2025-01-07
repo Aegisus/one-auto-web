@@ -147,7 +147,7 @@ export default function DeviceActions() {
 
   return (
     <div className="flex gap-x-5">
-      <ListBox items={listBoxItems} />
+      <ListBox items={listBoxItems} title={"Devices"} />
       {selectedKeys.has("") ? (
         <h2>Please select a device</h2>
       ) : (

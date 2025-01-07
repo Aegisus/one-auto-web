@@ -1,0 +1,165 @@
+[
+  {
+    "id": 2,
+    "uid": "Thorlabs,PM100USB,1920579,1.7.0",
+    "name": "Powermeter",
+    "functions": {
+      "device": "Thorlabs,PM100USB,1920579,1.7.0",
+      "functions": {
+        "set": {
+          "scale": "*1000",
+          "command": "commands.measure.measure_power"
+        },
+        "init": {
+          "steps": [
+            {
+              "args": "{wavelength}",
+              "command": "commands.wavelength.set_Wavelength"
+            },
+            {
+              "visa_address": "USB0::0x1313::0x8072::1920579::INSTR"
+            }
+          ]
+        },
+        "loop": {
+          "type": "interval",
+          "delay": "{delay}",
+          "scale": "*1000",
+          "command": "commands.measure.measure_power"
+        }
+      },
+      "variables": {
+        "delay": 0.1,
+        "wavelength": 1550
+      }
+    },
+    "commands": {
+      "device": "Thorlabs,PM100USB,1920579,1.7.0",
+      "commands": {
+        "measure": {
+          "measure_power": "MEAS:POWER?"
+        },
+        "wavelength": {
+          "set_Wavelength": "SENS:CORR:WAV {wavelength}",
+          "check_Wavelength": "SENS:CORR:WAV?"
+        },
+        "auto_power_conversion": {
+          "on": "SENS:POW:RANG:AUTO ON",
+          "off": "SENS:POW:RANG:AUTO OFF"
+        }
+      }
+    },
+    "created_at": "2024-11-21T09:10:33.451Z",
+    "updated_at": "2025-01-02T07:29:22.529Z"
+  },
+  {
+    "id": 3,
+    "uid": "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
+    "name": "VOA Driver",
+    "functions": {
+      "device": "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
+      "functions": {
+        "set": {
+          "command": "commands.voltage.set_voltage",
+          "parameters": {
+            "channel": "{value}",
+            "voltage": "{value}"
+          }
+        },
+        "init": {
+          "steps": [
+            {
+              "command": "commands.init.reset"
+            },
+            {
+              "command": "commands.init.get_identifier"
+            }
+          ]
+        },
+        "loop": {
+          "type": "range",
+          "command": "commands.voltage.set_voltage",
+          "parameters": {
+            "end": "{end}",
+            "delay": "{delay}",
+            "start": "{start}",
+            "step_size": "{step_size}"
+          }
+        }
+      },
+      "variables": {
+        "limits": {
+          "lower": 0,
+          "upper": 4.095
+        }
+      }
+    },
+    "commands": {
+      "device": "Centre_for_Quantum_Technologies_VOA_Driver_VOAD-QO05",
+      "commands": {
+        "init": {
+          "reset": "*RST",
+          "get_identifier": "*IDN?"
+        },
+        "voltage": {
+          "set_voltage": "VOLT {channel} {voltage}"
+        }
+      }
+    },
+    "created_at": "2024-11-21T09:10:55.687Z",
+    "updated_at": "2025-01-02T09:17:48.695Z"
+  },
+  {
+    "id": 1,
+    "uid": "CQT_Laser_driver_QO_024",
+    "name": "Laser Driver",
+    "functions": {
+      "device": "CQT_Laser_driver_QO_024",
+      "functions": {
+        "set": {
+          "delay": 0.5,
+          "options": {
+            "on": "commands.switch.on",
+            "off": "commands.switch.off"
+          }
+        },
+        "init": {
+          "steps": [
+            {
+              "command": "commands.init.reset"
+            }
+          ]
+        },
+        "loop": {
+          "type": "range",
+          "command": "commands.laser.set_laser_current",
+          "parameters": {
+            "end": "{end}",
+            "delay": "{delay}",
+            "start": "{start}",
+            "step_size": "{step_size}"
+          }
+        }
+      }
+    },
+    "commands": {
+      "device": "CQT_Laser_driver_QO_024",
+      "commands": {
+        "init": {
+          "reset": "*RST",
+          "get_identifier": "*IDN?"
+        },
+        "laser": {
+          "set_current_limit": "limit {value}",
+          "set_laser_current": "current {value:.2f}"
+        },
+        "switch": {
+          "on": "on",
+          "off": "off"
+        }
+      }
+    },
+    "created_at": "2024-11-21T09:10:09.269Z",
+    "updated_at": "2025-01-02T05:47:22.999Z"
+  }
+]
