@@ -1,0 +1,62 @@
+[
+  {
+    "name": "set_laser_current",
+    "steps": [
+      {
+        "command": "turn_on"
+      },
+      {
+        "command": "set_current",
+        "parameters": {
+          "value": "{current}"
+        }
+      }
+    ],
+    "parameters": {
+      "current": {
+        "type": "number",
+        "unit": "mA",
+        "description": "Current to set for the laser diode"
+      }
+    },
+    "description": "Set the current for the laser diode"
+  },
+  {
+    "name": "laser_ramp",
+    "type": "loop",
+    "steps": [
+      {
+        "command": "turn_on"
+      },
+      {
+        "command": "set_current",
+        "parameters": {
+          "value": "{current}"
+        }
+      }
+    ],
+    "parameters": {
+      "delay": {
+        "type": "number",
+        "unit": "ms",
+        "description": "Delay between steps"
+      },
+      "step_size": {
+        "type": "number",
+        "unit": "mA",
+        "description": "Step size for each increment"
+      },
+      "end_current": {
+        "type": "number",
+        "unit": "mA",
+        "description": "Ending current for the ramp"
+      },
+      "start_current": {
+        "type": "number",
+        "unit": "mA",
+        "description": "Starting current for the ramp"
+      }
+    },
+    "description": "Ramp the laser current over a range"
+  }
+]

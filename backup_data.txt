@@ -1,0 +1,136 @@
+Laser Driver
+
+functions
+{
+    "set": {
+      "scale": "*1000",
+      "command": "commands.measure.measure_power"
+    },
+    "init": {
+      "steps": [
+        {
+          "args": "{wavelength}",
+          "command": "commands.wavelength.set_Wavelength"
+        },
+        {
+          "visa_address": "USB0::0x1313::0x8072::1920579::INSTR"
+        }
+      ]
+    },
+    "loop": {
+      "type": "interval",
+      "delay": "{delay}",
+      "scale": "*1000",
+      "command": "commands.measure.measure_power"
+    },
+    "variables": {
+      "delay": 0.1,
+      "wavelength": 1550
+    }
+  }
+
+layout
+  {
+  "laser": {
+    "turn_on": "LASER:ON",
+    "turn_off": "LASER:OFF",
+    "set_current": "LASER:CURR {value}"
+  }
+}
+
+Powermeter
+functions
+{
+  "set": {
+    "scale": "*1000",
+    "command": "commands.measure.measure_power"
+  },
+  "init": {
+    "steps": [
+      {
+        "args": "{wavelength}",
+        "command": "commands.wavelength.set_Wavelength"
+      },
+      {
+        "visa_address": "USB0::0x1313::0x8072::1920579::INSTR"
+      }
+    ]
+  },
+  "loop": {
+    "type": "interval",
+    "delay": "{delay}",
+    "scale": "*1000",
+    "command": "commands.measure.measure_power"
+  },
+  "variables": {
+    "delay": 0.1,
+    "wavelength": 1550
+  }
+}
+commands
+{
+  "commands": {
+    "measure": {
+      "measure_power": "MEAS:POWER?"
+    },
+    "wavelength": {
+      "set_Wavelength": "SENS:CORR:WAV {wavelength}",
+      "check_Wavelength": "SENS:CORR:WAV?"
+    },
+    "auto_power_conversion": {
+      "on": "SENS:POW:RANG:AUTO ON",
+      "off": "SENS:POW:RANG:AUTO OFF"
+    }
+  }
+}
+
+VOA Driver
+functions
+{
+  "set": {
+    "command": "commands.voltage.set_voltage",
+    "parameters": {
+      "channel": "{value}",
+      "voltage": "{value}"
+    }
+  },
+  "init": {
+    "steps": [
+      {
+        "command": "commands.init.reset"
+      },
+      {
+        "command": "commands.init.get_identifier"
+      }
+    ]
+  },
+  "loop": {
+    "type": "range",
+    "command": "commands.voltage.set_voltage",
+    "parameters": {
+      "end": "{end}",
+      "delay": "{delay}",
+      "start": "{start}",
+      "step_size": "{step_size}"
+    }
+  },
+  "variables": {
+    "limits": {
+      "lower": 0,
+      "upper": 4.095
+    }
+  }
+}
+
+commands
+{
+  "commands": {
+    "init": {
+      "reset": "*RST",
+      "get_identifier": "*IDN?"
+    },
+    "voltage": {
+      "set_voltage": "VOLT {channel} {voltage}"
+    }
+  }
+}
