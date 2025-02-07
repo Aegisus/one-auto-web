@@ -2,10 +2,8 @@ import ComponentMapping from "@/components/dashboard/ComponentMapping";
 import { useSelectedKeysStore } from "@/config/store";
 
 const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
-  // selected device uid from Zustand store
+  // Selected device UID from Zustand store
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
-  // const selectedKeysString = Array.from(selectedKeys).join(", ");
-  // console.log(selectedKeysString);
 
   return (
     <div className="space-y-6">
@@ -23,7 +21,7 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                 title={title}
                 description={description}
               >
-                {/* Handle tabbed components */}
+                {/* Handle tabbed components inside sections */}
                 {"tabs" in components ? (
                   <ComponentMapping.tabs key={index} items={components.tabs} />
                 ) : (
@@ -39,6 +37,7 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                               key={idx}
                               label={component.label}
                               submitLabel={component.submitLabel}
+                              switchLabel={component.switchLabel}
                               placeholder={component.placeholder}
                               title={component.title}
                               function={component.function}
@@ -53,10 +52,7 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
               </SectionComponent>
             );
           }
-        } else if (layout.type === "tabbed" && layout.tabs) {
-          return <ComponentMapping.tabs key={index} items={layout.tabs} />;
         }
-
         return null;
       })}
     </div>

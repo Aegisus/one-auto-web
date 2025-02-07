@@ -8,7 +8,11 @@ import { keymap } from "@codemirror/view";
 import { defaultKeymap, indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
 import Notifications from "@/components/device/notifications";
-import { updateCommands } from "@/stores/useDeviceActionsStore"; // Adjust the import according to your project structure
+import {
+  updateCommands,
+  useDeviceActionsStore,
+} from "@/stores/useDeviceActionsStore";
+import { type DynamicObjectArray } from "@/db/zod/zodDeviceActionsSchema";
 import * as jsYaml from "js-yaml";
 
 interface InputAreaProps {
@@ -30,6 +34,7 @@ export default function CommandInputArea({
   setCommands,
 }: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
+  const selectedKeysString = Array.from(selectedKeys).join(", ");
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [notification, setNotification] = useState<{
@@ -53,11 +58,26 @@ export default function CommandInputArea({
     commandsRef.current = commands;
   }, [commands]);
 
+  const { deviceActions, setDeviceActions } = useDeviceActionsStore();
+
   const handleUpdateCommands = useCallback(async () => {
     const currentSelectedValue = selectedValueRef.current;
     const currentCommands = commandsRef.current;
+    console.log(currentCommands);
     try {
-      await updateCommands(currentSelectedValue, yamlToJson(currentCommands));
+      const updatedCommands = yamlToJson(currentCommands) as DynamicObjectArray;
+
+      await updateCommands(currentSelectedValue, updatedCommands);
+
+      const updatedDeviceActions = deviceActions.map((deviceAction) => {
+        if (deviceAction.uid === selectedKeysString) {
+          return { ...deviceAction, commands: updatedCommands };
+        }
+        return deviceAction;
+      });
+
+      setDeviceActions(updatedDeviceActions);
+
       setNotification({
         type: "success",
         content: "Commands updated successfully",

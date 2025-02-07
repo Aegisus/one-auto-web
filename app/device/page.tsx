@@ -13,7 +13,10 @@ import {
   updateLayout,
 } from "@/stores/useDeviceActionsStore";
 import { useSelectedKeysStore } from "@/config/store";
-import { type DeviceActionsArray } from "@/db/zod/zodDeviceActionsSchema";
+import {
+  type DeviceActionsArray,
+  type DynamicObjectArray,
+} from "@/db/zod/zodDeviceActionsSchema";
 import type { ItemListType } from "@/components/device/listbox";
 import Notifications from "@/components/device/notifications";
 import * as jsYaml from "js-yaml";
@@ -103,9 +106,26 @@ export default function DeviceActions() {
     setNotification(null);
   };
 
+  const { isLoading, error, isValidating } = useDeviceActions();
+  const { deviceActions, setDeviceActions } = useDeviceActionsStore();
+
   const handleUpdateFunctions = async () => {
     try {
-      await updateFunctions(selectedKeysString, yamlToJson(deviceFunctions));
+      const updatedFunctions = yamlToJson(
+        deviceFunctions
+      ) as DynamicObjectArray;
+
+      await updateFunctions(selectedKeysString, updatedFunctions);
+
+      const updatedDeviceActions = deviceActions.map((deviceAction) => {
+        if (deviceAction.uid === selectedKeysString) {
+          return { ...deviceAction, functions: updatedFunctions };
+        }
+        return deviceAction;
+      });
+
+      setDeviceActions(updatedDeviceActions);
+
       setNotification({
         type: "success",
         content: "Functions updated successfully",
@@ -117,7 +137,19 @@ export default function DeviceActions() {
 
   const handleUpdateCommands = async () => {
     try {
-      await updateCommands(selectedKeysString, yamlToJson(deviceCommands));
+      const updatedCommands = yamlToJson(deviceCommands) as DynamicObjectArray;
+
+      await updateCommands(selectedKeysString, updatedCommands);
+
+      const updatedDeviceActions = deviceActions.map((deviceAction) => {
+        if (deviceAction.uid === selectedKeysString) {
+          return { ...deviceAction, commands: updatedCommands };
+        }
+        return deviceAction;
+      });
+
+      setDeviceActions(updatedDeviceActions);
+
       setNotification({
         type: "success",
         content: "Commands updated successfully",
@@ -129,7 +161,19 @@ export default function DeviceActions() {
 
   const handleUpdateLayout = async () => {
     try {
-      await updateLayout(selectedKeysString, yamlToJson(deviceLayout));
+      const updatedLayout = yamlToJson(deviceLayout) as DynamicObjectArray;
+
+      await updateLayout(selectedKeysString, updatedLayout);
+
+      const updatedDeviceActions = deviceActions.map((deviceAction) => {
+        if (deviceAction.uid === selectedKeysString) {
+          return { ...deviceAction, layout: updatedLayout };
+        }
+        return deviceAction;
+      });
+
+      setDeviceActions(updatedDeviceActions);
+
       setNotification({
         type: "success",
         content: "Layout updated successfully",
@@ -139,11 +183,6 @@ export default function DeviceActions() {
     }
   };
 
-  const { isLoading, error, isValidating } = useDeviceActions();
-  const { deviceActions } = useDeviceActionsStore();
-  // useEffect(() => {
-  //   console.log("deviceActions database:", deviceActions);
-  // }, [deviceActions]);
   const listBoxItems = convertDevicesToListBoxItems(deviceActions);
 
   // selected device uid
@@ -184,38 +223,44 @@ export default function DeviceActions() {
   // }, [selectedKeysString]);
 
   return (
-    <div className="flex gap-x-5">
-      <ListBox items={listBoxItems} title={"Devices"} />
-      {selectedKeys.has("") ? (
-        <h2>Please select a device</h2>
-      ) : (
-        <div className="w-full">
-          <FunctionsInputArea
-            functions={deviceFunctions}
-            setFunctions={setDeviceFunctions}
-          />
-          <div className="flex justify-center mb-5">
-            <Button onPress={handleUpdateFunctions} className="w-46">
-              Save
-            </Button>
+    <div className="py-6 space-y-6">
+      <h1 className="text-2xl font-bold">Device Configuration</h1>
+      <div className="flex gap-x-5">
+        <ListBox items={listBoxItems} title={"Devices"} />
+        {selectedKeys.has("") ? (
+          <h2>Please select a device</h2>
+        ) : (
+          <div className="w-full">
+            <FunctionsInputArea
+              functions={deviceFunctions}
+              setFunctions={setDeviceFunctions}
+            />
+            <div className="flex justify-center mb-5">
+              <Button onPress={handleUpdateFunctions} className="w-46">
+                Save
+              </Button>
+            </div>
+            <CommandsInputArea
+              commands={deviceCommands}
+              setCommands={setDeviceCommands}
+            />
+            <div className="flex justify-center mb-5">
+              <Button onPress={handleUpdateCommands} className="w-46">
+                Save
+              </Button>
+            </div>
+            <LayoutInputArea
+              layout={deviceLayout}
+              setLayout={setDeviceLayout}
+            />
+            <div className="flex justify-center">
+              <Button onPress={handleUpdateLayout} className="w-46">
+                Save
+              </Button>
+            </div>
           </div>
-          <CommandsInputArea
-            commands={deviceCommands}
-            setCommands={setDeviceCommands}
-          />
-          <div className="flex justify-center mb-5">
-            <Button onPress={handleUpdateCommands} className="w-46">
-              Save
-            </Button>
-          </div>
-          <LayoutInputArea layout={deviceLayout} setLayout={setDeviceLayout} />
-          <div className="flex justify-center">
-            <Button onPress={handleUpdateLayout} className="w-46">
-              Save
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
       {notification && (
         <Notifications
           type={notification.type}

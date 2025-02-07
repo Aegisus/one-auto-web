@@ -8,9 +8,12 @@ import { keymap } from "@codemirror/view";
 import { defaultKeymap, indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
 import Notifications from "@/components/device/notifications";
-import { updateLayout } from "@/stores/useDeviceActionsStore"; // Adjust the import according to your project structure
+import {
+  updateLayout,
+  useDeviceActionsStore,
+} from "@/stores/useDeviceActionsStore"; // Adjust the import according to your project structure
+import { type DynamicObjectArray } from "@/db/zod/zodDeviceActionsSchema";
 import * as jsYaml from "js-yaml";
-
 interface InputAreaProps {
   layout: string;
   setLayout: React.Dispatch<React.SetStateAction<string>>;
@@ -27,6 +30,7 @@ function yamlToJson(yamlStr: string): object {
 }
 export default function LayoutInputArea({ layout, setLayout }: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
+  const selectedKeysString = Array.from(selectedKeys).join(", ");
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [notification, setNotification] = useState<{
@@ -50,11 +54,25 @@ export default function LayoutInputArea({ layout, setLayout }: InputAreaProps) {
     layoutRef.current = layout;
   }, [layout]);
 
+  const { deviceActions, setDeviceActions } = useDeviceActionsStore();
+
   const handleUpdateLayout = useCallback(async () => {
     const currentSelectedValue = selectedValueRef.current;
     const currentLayout = layoutRef.current;
     try {
-      await updateLayout(currentSelectedValue, yamlToJson(currentLayout));
+      const updatedLayout = yamlToJson(currentLayout) as DynamicObjectArray;
+
+      await updateLayout(currentSelectedValue, updatedLayout);
+
+      const updatedDeviceActions = deviceActions.map((deviceAction) => {
+        if (deviceAction.uid === selectedKeysString) {
+          return { ...deviceAction, layout: updatedLayout };
+        }
+        return deviceAction;
+      });
+
+      setDeviceActions(updatedDeviceActions);
+
       setNotification({
         type: "success",
         content: "Layout updated successfully",

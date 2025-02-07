@@ -8,7 +8,11 @@ import { keymap } from "@codemirror/view";
 import { defaultKeymap, indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark"; // Import dark theme
 import Notifications from "@/components/device/notifications";
-import { updateFunctions } from "@/stores/useDeviceActionsStore"; // Adjust the import according to your project structure
+import {
+  updateFunctions,
+  useDeviceActionsStore,
+} from "@/stores/useDeviceActionsStore";
+import { type DynamicObjectArray } from "@/db/zod/zodDeviceActionsSchema";
 import * as jsYaml from "js-yaml";
 
 interface InputAreaProps {
@@ -30,6 +34,7 @@ export default function FunctionInputArea({
   setFunctions,
 }: InputAreaProps) {
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
+  const selectedKeysString = Array.from(selectedKeys).join(", ");
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [notification, setNotification] = useState<{
@@ -43,21 +48,38 @@ export default function FunctionInputArea({
   );
 
   const selectedValueRef = useRef(selectedValue);
-  const commandsRef = useRef(functions);
+  const functionsRef = useRef(functions);
 
   useEffect(() => {
     selectedValueRef.current = selectedValue;
   }, [selectedValue]);
 
   useEffect(() => {
-    commandsRef.current = functions;
+    functionsRef.current = functions;
   }, [functions]);
+
+  const { deviceActions, setDeviceActions } = useDeviceActionsStore();
 
   const handleUpdateFunctions = useCallback(async () => {
     const currentSelectedValue = selectedValueRef.current;
-    const currentFunctions = commandsRef.current;
+    const currentFunctions = functionsRef.current;
+
     try {
-      await updateFunctions(currentSelectedValue, yamlToJson(currentFunctions));
+      const updatedFunctions = yamlToJson(
+        currentFunctions
+      ) as DynamicObjectArray;
+
+      await updateFunctions(currentSelectedValue, updatedFunctions);
+
+      const updatedDeviceActions = deviceActions.map((deviceAction) => {
+        if (deviceAction.uid === selectedKeysString) {
+          return { ...deviceAction, functions: updatedFunctions };
+        }
+        return deviceAction;
+      });
+
+      setDeviceActions(updatedDeviceActions);
+
       setNotification({
         type: "success",
         content: "Functions updated successfully",

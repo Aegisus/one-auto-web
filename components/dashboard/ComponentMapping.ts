@@ -1,6 +1,7 @@
 import Form from "./Form";
 import Tabs from "./Tabs";
 import Section from "./Section";
+import Switch from "./Switch";
 // import Graph from "./Graph";
 // import Chart from "./Chart";
 // import Switch from "./Switch";
@@ -11,6 +12,7 @@ const componentMap: Record<string, React.FC<any>> = {
   form: Form,
   tabs: Tabs,
   section: Section,
+  switch: Switch,
   //   graph: Graph,
   //   chart: Chart,
   //   switch: Switch,
