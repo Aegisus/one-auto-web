@@ -32,12 +32,25 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                           const Component = ComponentMapping[component.type];
                           if (!Component) return null;
 
+                          if (component.type === "dropdown") {
+                            return (
+                              <div key={idx}>
+                                <Component
+                                  key={idx}
+                                  buttonLabel={component.buttonLabel}
+                                  items={component.items}
+                                />
+                              </div>
+                            );
+                          }
+
                           return (
                             <Component
                               key={idx}
                               label={component.label}
                               submitLabel={component.submitLabel}
                               switchLabel={component.switchLabel}
+                              defaultValue={component.defaultValue}
                               placeholder={component.placeholder}
                               title={component.title}
                               function={component.function}

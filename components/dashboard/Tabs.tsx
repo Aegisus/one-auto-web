@@ -9,6 +9,8 @@ interface TabItem {
   placeholder?: string;
   submitLabel?: string;
   function?: string;
+  buttonLabel?: string;
+  items?: { key: string; label: string }[];
 }
 
 interface TabsProps {
@@ -37,6 +39,11 @@ const CustomTabs: React.FC<TabsProps> = ({ items }) => {
                           placeholder={item.placeholder || ""}
                           submitLabel={item.submitLabel}
                           function={item.function}
+                        />
+                      ) : item.type === "dropdown" ? (
+                        <Component
+                          buttonLabel={item.buttonLabel || "Select"}
+                          items={item.items || []}
                         />
                       ) : (
                         <Component {...item} />

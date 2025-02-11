@@ -78,8 +78,21 @@ const modalConfig: additionalModalProps = {
 };
 
 export default function Connect() {
-  const { devices, connectDeviceToSSE } = getSimulationDevices();
+  // const { devices, connectDeviceToSSE } = getSimulationDevices();
   // const { devices, connectDeviceToSSE } = getDevices();
+
+  let devices, connectDeviceToSSE;
+
+  const fetchedDevices = getDevices();
+  if (fetchedDevices.devices && fetchedDevices.devices.length > 0) {
+    devices = fetchedDevices.devices;
+    connectDeviceToSSE = fetchedDevices.connectDeviceToSSE;
+  } else {
+    const simulatedDevices = getSimulationDevices();
+    devices = simulatedDevices.devices;
+    connectDeviceToSSE = simulatedDevices.connectDeviceToSSE;
+  }
+
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
 
