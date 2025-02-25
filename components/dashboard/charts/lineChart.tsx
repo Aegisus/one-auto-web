@@ -600,7 +600,7 @@ const LineChart = React.forwardRef<HTMLDivElement, LineChartProps>(
       <div
         ref={ref}
         className={cx("h-80 w-full", className)}
-        tremor-id="tremor-raw"
+        data-tremor-id="tremor-raw"
         {...other}
       >
         <ResponsiveContainer>

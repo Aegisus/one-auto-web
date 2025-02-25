@@ -24,6 +24,10 @@ export const siteConfig = {
       label: "Send Commands",
       href: "/sendCommands",
     },
+    {
+      label: "test",
+      href: "/test",
+    },
   ],
   // navMenuItems: [
   //   {
