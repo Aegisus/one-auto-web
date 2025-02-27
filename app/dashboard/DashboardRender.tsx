@@ -21,47 +21,37 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                 title={title}
                 description={description}
               >
-                {/* Handle tabbed components inside sections */}
-                {"tabs" in components ? (
-                  <ComponentMapping.tabs key={index} items={components.tabs} />
-                ) : (
-                  <div className="flex flex-col space-y-4">
-                    {Object.entries(components as Record<string, any[]>).map(
-                      ([key, componentArray]) =>
-                        componentArray.map((component, idx) => {
-                          const Component = ComponentMapping[component.type];
-                          if (!Component) return null;
+                <div className="flex flex-col space-y-4">
+                  {/* Render default components */}
+                  {"default" in components &&
+                    (components.default as any[]).map((component, idx) => {
+                      const Component = ComponentMapping[component.type];
+                      if (!Component) return null;
 
-                          if (component.type === "dropdown") {
-                            return (
-                              <div key={idx}>
-                                <Component
-                                  key={idx}
-                                  buttonLabel={component.buttonLabel}
-                                  items={component.items}
-                                />
-                              </div>
-                            );
-                          }
+                      return (
+                        <Component
+                          key={idx}
+                          label={component.label}
+                          submitLabel={component.submitLabel}
+                          switchLabel={component.switchLabel}
+                          defaultValue={component.defaultValue}
+                          placeholder={component.placeholder}
+                          title={component.title}
+                          function={component.function}
+                          dataSource={component.dataSource}
+                          {...component} // Pass any additional properties
+                        />
+                      );
+                    })}
 
-                          return (
-                            <Component
-                              key={idx}
-                              label={component.label}
-                              submitLabel={component.submitLabel}
-                              switchLabel={component.switchLabel}
-                              defaultValue={component.defaultValue}
-                              placeholder={component.placeholder}
-                              title={component.title}
-                              function={component.function}
-                              dataSource={component.dataSource}
-                              {...component} // Pass any additional properties
-                            />
-                          );
-                        })
-                    )}
-                  </div>
-                )}
+                  {/* Render tabbed components */}
+                  {"tabs" in components && (
+                    <ComponentMapping.tabs
+                      key={index}
+                      items={components.tabs}
+                    />
+                  )}
+                </div>
               </SectionComponent>
             );
           }
