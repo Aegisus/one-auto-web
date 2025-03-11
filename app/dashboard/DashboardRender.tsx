@@ -1,9 +1,53 @@
 import ComponentMapping from "@/components/dashboard/ComponentMapping";
-import { useSelectedKeysStore } from "@/config/store";
+import { useSelectedKeysStore } from "@/config/zustand/ListboxKeys";
+import { useDBDeviceStore, useDBDevices } from "@/stores/useDeviceStore";
+
+type ComportDevice = {
+  type: "comport";
+  com_port: string;
+  ID_MODEL: string;
+  ID_SERIAL: string;
+  ID_FROM_DATABASE: string;
+};
+
+type PyvisaDevice = {
+  type: "pyvisa";
+  IDN: string;
+  pyvisa_address: string;
+};
+
+type Device = {
+  id: number;
+  uid: string;
+  name: string;
+  description: string;
+  data: ComportDevice | PyvisaDevice;
+  created_at: string | null;
+  updated_at: string | null;
+};
 
 const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
   // Selected device UID from Zustand store
   const selectedKeys = useSelectedKeysStore((state) => state.selectedKeys);
+  const selectedUID = Array.from(selectedKeys)[0] || null;
+
+  // Get device info from Zustand store
+  const { isLoading, error, isValidating } = useDBDevices();
+  const { dbDevices } = useDBDeviceStore();
+
+  const selectedDBDevice = dbDevices.find(
+    (dbDevice: Device) => dbDevice.uid === selectedUID
+  );
+
+  let deviceAddress: string | null = null;
+  if (selectedDBDevice) {
+    const deviceType = selectedDBDevice.data.type;
+    if (deviceType === "comport") {
+      deviceAddress = selectedDBDevice.data.com_port;
+    } else if (deviceType === "pyvisa") {
+      deviceAddress = selectedDBDevice.data.pyvisa_address;
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -31,6 +75,8 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                       return (
                         <Component
                           key={idx}
+                          deviceUID={selectedUID} // Pass UID
+                          deviceType={selectedDBDevice?.data.type} // Pass deviceType from device.data.type
                           label={component.label}
                           submitLabel={component.submitLabel}
                           switchLabel={component.switchLabel}
@@ -38,7 +84,10 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                           placeholder={component.placeholder}
                           title={component.title}
                           function={component.function}
+                          dropdownID={component.dropdownID}
+                          outputID={component.outputID}
                           dataSource={component.dataSource}
+                          deviceAddress={deviceAddress}
                           {...component} // Pass any additional properties
                         />
                       );

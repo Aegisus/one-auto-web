@@ -12,7 +12,7 @@ import {
   updateCommands,
   updateLayout,
 } from "@/stores/useDeviceActionsStore";
-import { useSelectedKeysStore } from "@/config/store";
+import { useSelectedKeysStore } from "@/config/zustand/ListboxKeys";
 import {
   type DeviceActionsArray,
   type DynamicObjectArray,

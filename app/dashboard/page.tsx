@@ -9,7 +9,7 @@ import {
 } from "@/db/zod/zodDeviceActionsSchema";
 import type { ItemListType } from "@/components/device/listbox";
 import ListBox from "@/components/device/listbox";
-import { useSelectedKeysStore } from "@/config/store";
+import { useSelectedKeysStore } from "@/config/zustand/ListboxKeys";
 
 function convertDevicesToListBoxItems(
   deviceActions: DeviceActionsArray
@@ -48,7 +48,7 @@ export default function Page() {
         : []
     ) ?? [];
 
-  console.log(layouts);
+  // console.log(layouts);
 
   const listBoxItems = convertDevicesToListBoxItems(deviceActions);
   // const selectedKeysString = Array.from(selectedKeys).join(", ");

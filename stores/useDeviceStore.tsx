@@ -4,7 +4,7 @@ import useSWR, { mutate } from "swr";
 import { env } from "@/env.mjs";
 import axios from "axios";
 import {
-  type DBDeviceType,
+  // type DBDeviceType,
   DBDevicesArraySchema,
   DBDeviceState,
   type DBDevicesArray,

@@ -1,7 +1,7 @@
 "use client";
 import { ReactNode, useState, useMemo } from "react";
 import { Listbox, ListboxSection, ListboxItem } from "@heroui/listbox";
-import { useSelectedKeysStore } from "../../config/store";
+import { useSelectedKeysStore } from "../../config/zustand/ListboxKeys";
 
 export type ItemListType = {
   key: string;

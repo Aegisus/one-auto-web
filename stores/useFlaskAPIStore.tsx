@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { env } from "@/env.mjs";
 import {
   DeviceState,
-  DeviceSchema,
+  // DeviceSchema,
   type DevicesArray,
 } from "@/db/zod/zodDeviceSchema";
 

@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import DeviceCard from "@/components/connect/devicecard";
 import { getSimulationDevices, getDevices } from "@/stores/useFlaskAPIStore";
 import { useDBDeviceStore, useDBDevices } from "@/stores/useDeviceStore";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
-import { type DeviceType, type DevicesArray } from "@/db/zod/zodDeviceSchema";
+import {
+  type DeviceType,
+  type DevicesArray,
+  ComportDeviceSchema,
+  PyvisaDeviceSchema,
+} from "@/db/zod/zodDeviceSchema";
 import { type DBDevicesArray } from "@/db/zod/zodDBDeviceSchema";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -32,6 +38,7 @@ type DBDeviceField = {
 
 // Type guards
 function isComportDevice(device: any): device is {
+  type: string;
   com_port: string;
   ID_MODEL: string;
   ID_SERIAL: string;
@@ -41,11 +48,24 @@ function isComportDevice(device: any): device is {
 }
 
 function isPyvisaDevice(device: any): device is {
+  type: string;
   IDN: string;
   pyvisa_address: string;
 } {
   return "IDN" in device;
 }
+
+// function isComportDevice(
+//   device: DeviceType
+// ): device is z.infer<typeof ComportDeviceSchema> {
+//   return device.type === "comport";
+// }
+
+// function isPyvisaDevice(
+//   device: DeviceType
+// ): device is z.infer<typeof PyvisaDeviceSchema> {
+//   return device.type === "pyvisa";
+// }
 
 interface additionalModalProps {
   size:
@@ -79,19 +99,19 @@ const modalConfig: additionalModalProps = {
 
 export default function Connect() {
   // const { devices, connectDeviceToSSE } = getSimulationDevices();
-  // const { devices, connectDeviceToSSE } = getDevices();
+  const { devices, connectDeviceToSSE } = getDevices();
 
-  let devices, connectDeviceToSSE;
+  // let devices, connectDeviceToSSE;
 
-  const fetchedDevices = getDevices();
-  if (fetchedDevices.devices && fetchedDevices.devices.length > 0) {
-    devices = fetchedDevices.devices;
-    connectDeviceToSSE = fetchedDevices.connectDeviceToSSE;
-  } else {
-    const simulatedDevices = getSimulationDevices();
-    devices = simulatedDevices.devices;
-    connectDeviceToSSE = simulatedDevices.connectDeviceToSSE;
-  }
+  // const fetchedDevices = getDevices();
+  // if (fetchedDevices.devices && fetchedDevices.devices.length > 0) {
+  //   devices = fetchedDevices.devices;
+  //   connectDeviceToSSE = fetchedDevices.connectDeviceToSSE;
+  // } else {
+  //   const simulatedDevices = getSimulationDevices();
+  //   devices = simulatedDevices.devices;
+  //   connectDeviceToSSE = simulatedDevices.connectDeviceToSSE;
+  // }
 
   const { isLoading, error, isValidating } = useDBDevices();
   const { dbDevices } = useDBDeviceStore();
@@ -103,8 +123,46 @@ export default function Connect() {
     };
   }, [connectDeviceToSSE]);
 
+  // function compareDevices(
+  //   device: SingleDevice,
+  //   dbDevices: DBDevicesArray
+  // ): string {
+  //   let deviceIdentifier: string | undefined;
+
+  //   if (isComportDevice(device)) {
+  //     deviceIdentifier = device.ID_SERIAL;
+  //   } else if (isPyvisaDevice(device)) {
+  //     deviceIdentifier = device.IDN;
+  //   } else {
+  //     return "Register Required";
+  //   }
+
+  //   const matchedDBDevice = findSelectedDBDevice(dbDevices, deviceIdentifier);
+
+  //   if (!matchedDBDevice || !matchedDBDevice.data) {
+  //     return "Register Required";
+  //   }
+
+  //   const dbData = matchedDBDevice.data;
+  //   const deviceKeys = Object.keys(device) as (keyof typeof device)[];
+  //   const dbDataKeys = Object.keys(dbData) as (keyof typeof dbData)[];
+
+  //   if (
+  //     deviceKeys.length === dbDataKeys.length &&
+  //     deviceKeys.every((key) => device[key] === dbData[key])
+  //   ) {
+  //     return "Exact";
+  //   }
+
+  //   if (deviceKeys.some((key) => device[key] !== dbData[key])) {
+  //     return "Update Required";
+  //   }
+
+  //   return "Register Required";
+  // }
+
   function compareDevices(
-    device: SingleDevice,
+    device: DeviceType,
     dbDevices: DBDevicesArray
   ): string {
     let deviceIdentifier: string | undefined;
@@ -123,10 +181,15 @@ export default function Connect() {
       return "Register Required";
     }
 
-    const dbData = matchedDBDevice.data;
-    const deviceKeys = Object.keys(device) as (keyof typeof device)[];
-    const dbDataKeys = Object.keys(dbData) as (keyof typeof dbData)[];
+    const dbData = matchedDBDevice.data as Partial<DeviceType>; // Ensure correct type inference
+    const deviceKeys = Object.keys(device).filter(
+      (key) => key !== "type"
+    ) as (keyof DeviceType)[];
+    const dbDataKeys = Object.keys(dbData).filter(
+      (key) => key !== "type"
+    ) as (keyof typeof dbData)[];
 
+    // Fix type checking to avoid indexing issues
     if (
       deviceKeys.length === dbDataKeys.length &&
       deviceKeys.every((key) => device[key] === dbData[key])
@@ -169,16 +232,31 @@ export default function Connect() {
     setIsModalOpen(false);
   };
 
+  // const findSelectedDevice = (
+  //   devices: DevicesArray,
+  //   selectedDevice: string | undefined
+  // ): SingleDeviceField | null => {
+  //   for (const device of devices) {
+  //     if (
+  //       ("ID_SERIAL" in device && device.ID_SERIAL === selectedDevice) ||
+  //       ("IDN" in device && device.IDN === selectedDevice)
+  //     ) {
+  //       return device as SingleDeviceField;
+  //     }
+  //   }
+  //   return null;
+  // };
+
   const findSelectedDevice = (
     devices: DevicesArray,
     selectedDevice: string | undefined
-  ): SingleDeviceField | null => {
+  ): DeviceType | null => {
     for (const device of devices) {
       if (
-        ("ID_SERIAL" in device && device.ID_SERIAL === selectedDevice) ||
-        ("IDN" in device && device.IDN === selectedDevice)
+        (isComportDevice(device) && device.ID_SERIAL === selectedDevice) ||
+        (isPyvisaDevice(device) && device.IDN === selectedDevice)
       ) {
-        return device;
+        return device; // Now correctly typed as DeviceType
       }
     }
     return null;
@@ -200,23 +278,47 @@ export default function Connect() {
     return null;
   };
 
+  // const handleInputChange = (key: string, value: string) => {
+  //   if (deviceRequestData) {
+  //     const keys = key.split(".");
+  //     if (keys.length === 2 && keys[0] === "data") {
+  //       setDeviceRequestData({
+  //         ...deviceRequestData,
+  //         data: {
+  //           ...deviceRequestData.data,
+  //           [keys[1]]: value,
+  //         },
+  //       });
+  //     } else {
+  //       setDeviceRequestData({
+  //         ...deviceRequestData,
+  //         [key]: value,
+  //       });
+  //     }
+  //   }
+  // };
+
   const handleInputChange = (key: string, value: string) => {
     if (deviceRequestData) {
-      const keys = key.split(".");
-      if (keys.length === 2 && keys[0] === "data") {
-        setDeviceRequestData({
-          ...deviceRequestData,
-          data: {
-            ...deviceRequestData.data,
-            [keys[1]]: value,
-          },
-        });
-      } else {
-        setDeviceRequestData({
-          ...deviceRequestData,
-          [key]: value,
-        });
-      }
+      setDeviceRequestData((prev) => {
+        if (!prev) return prev; // Ensure it exists
+
+        const keys = key.split(".");
+        if (keys.length === 2 && keys[0] === "data") {
+          return {
+            ...prev,
+            data: {
+              ...prev.data,
+              [keys[1]]: value ?? "", // Ensure no `undefined` values
+            },
+          };
+        } else {
+          return {
+            ...prev,
+            [key]: value ?? "", // Ensure no `undefined` values
+          };
+        }
+      });
     }
   };
 
@@ -430,31 +532,59 @@ export default function Connect() {
           );
         })()
       ) : devices.length > 0 ? (
-        devices.flat().map((device, index) => (
-          <div
-            key={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
-            className="mt-3"
-          >
-            <div
-              onClick={() =>
-                setSelectedDevice(
-                  isComportDevice(device) ? device.ID_SERIAL : device.IDN
-                )
-              }
-              className="cursor-pointer"
-            >
-              <DeviceCard
-                data={device}
-                name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
-                actionRequired={
-                  compareDevices(device, dbDevices) === "Exact"
-                    ? ""
-                    : compareDevices(device, dbDevices)
+        // devices.flat().map((device, index) => (
+        //   <div
+        //     key={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+        //     className="mt-3"
+        //   >
+        //     <div
+        //       onClick={() =>
+        //         setSelectedDevice(
+        //           isComportDevice(device) ? device.ID_SERIAL : device.IDN
+        //         )
+        //       }
+        //       className="cursor-pointer"
+        //     >
+        //       <DeviceCard
+        //         data={device}
+        //         name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+        //         actionRequired={
+        //           compareDevices(device, dbDevices) === "Exact"
+        //             ? ""
+        //             : compareDevices(device, dbDevices)
+        //         }
+        //       />
+        //     </div>
+        //   </div>
+        // ))
+
+        devices.flat().map((device, index) => {
+          const uniqueKey =
+            (isComportDevice(device) ? device.ID_SERIAL : device.IDN) ??
+            `device-${index}`;
+          return (
+            <div key={uniqueKey} className="mt-3">
+              <div
+                onClick={() =>
+                  setSelectedDevice(
+                    isComportDevice(device) ? device.ID_SERIAL : device.IDN
+                  )
                 }
-              />
+                className="cursor-pointer"
+              >
+                <DeviceCard
+                  data={device}
+                  name={isComportDevice(device) ? device.ID_SERIAL : device.IDN}
+                  actionRequired={
+                    compareDevices(device, dbDevices) === "Exact"
+                      ? ""
+                      : compareDevices(device, dbDevices)
+                  }
+                />
+              </div>
             </div>
-          </div>
-        ))
+          );
+        })
       ) : (
         <p>No devices connected. {devices.length}</p>
       )}

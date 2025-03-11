@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useSelectedKeysStore } from "../../config/store";
+import { useSelectedKeysStore } from "../../config/zustand/ListboxKeys";
 import { EditorView, basicSetup } from "codemirror";
 import { yaml } from "@codemirror/lang-yaml";
 import { keymap } from "@codemirror/view";

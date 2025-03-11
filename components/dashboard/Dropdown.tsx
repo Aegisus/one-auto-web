@@ -6,7 +6,8 @@ import {
 } from "@heroui/dropdown";
 // import type { Selection } from "@heroui/select";
 import { Button } from "@heroui/button";
-import { useState, useMemo } from "react";
+import { useMultiDropdownStore } from "@/config/zustand/DropdownKeys"; // Import the new Zustand store
+import { useEffect } from "react";
 
 interface DropdownItemProps {
   key: string;
@@ -14,28 +15,38 @@ interface DropdownItemProps {
 }
 
 interface DropdownMenuProps {
+  dropdownID: string;
   items: DropdownItemProps[];
   initialSelectedItem: string;
   title: string;
 }
 
 export default function DashboardDropdown({
+  dropdownID,
   items,
   initialSelectedItem,
   title,
 }: DropdownMenuProps) {
-  const [selectedKeys, setSelectedKeys] = useState(
-    new Set([initialSelectedItem])
-  );
+  const { dropdowns, setDropdownKeys } = useMultiDropdownStore(); // Use new Zustand store
+  const dropdownSelectedKeys = dropdowns[dropdownID] || new Set();
 
-  const selectedValue = useMemo(
-    () => Array.from(selectedKeys).join(", ").replace(/_/g, ""),
-    [selectedKeys]
-  );
+  useEffect(() => {
+    if (!dropdownSelectedKeys.size && initialSelectedItem) {
+      setDropdownKeys(dropdownID, new Set([initialSelectedItem]));
+    }
+  }, [dropdownID, initialSelectedItem, setDropdownKeys, dropdownSelectedKeys]);
+
+  const selectedValue = Array.from(dropdownSelectedKeys)
+    .join(", ")
+    .replace(/_/g, "");
 
   const handleSelectionChange = (keys: any) => {
-    setSelectedKeys(new Set(keys));
+    setDropdownKeys(dropdownID, new Set(keys));
   };
+
+  // useEffect(() => {
+  //   console.log(`Dropdown ${dropdownID} value:`, selectedValue);
+  // }, [dropdownSelectedKeys, dropdownID, selectedValue]);
 
   return (
     <div>
@@ -51,7 +62,7 @@ export default function DashboardDropdown({
           aria-label="Pick your choice"
           items={items}
           selectionMode="single"
-          selectedKeys={selectedKeys}
+          selectedKeys={dropdownSelectedKeys}
           onSelectionChange={handleSelectionChange}
         >
           {(item) => (
