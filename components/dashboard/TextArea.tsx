@@ -6,41 +6,39 @@ interface DashboardTextAreaProps {
   label: string;
   placeholder: string;
   defaultValue: string;
-  outputId: string;
+  deviceUID: string;
 }
 
 export default function DashboardTextArea({
   label,
   placeholder,
   defaultValue,
-  outputId,
+  deviceUID,
 }: DashboardTextAreaProps) {
-  const setOutput = useOutputStore((state) => state.setOutput);
-  // const outputs = useOutputStore((state) => state.outputs);
-  const output = useOutputStore((state) => state.outputs[outputId] || "");
+  const clearOutput = useOutputStore((state) => state.clearOutput);
+
+  // Access the "all" category for the given deviceUID
+  const output = useOutputStore((state) => state.outputs[deviceUID]?.all || "");
 
   const [textAreaValue, setTextAreaValue] = useState(output);
 
   useEffect(() => {
-    const newOutput = textAreaValue + output;
-    setTextAreaValue(newOutput);
+    setTextAreaValue(output); // Update the local state when the output changes
   }, [output]);
 
-  // useEffect(() => {
-  //   setOutput(outputId, defaultValue);
-  // }, [defaultValue, outputId, setOutput]);
-
-  // const handleChange = (value: string) => {
-  //   setOutput(outputId, output + value);
-  // };
+  const handleClear = () => {
+    clearOutput(deviceUID); // Clear all outputs for the deviceUID in the store
+    setTextAreaValue(""); // Reset the local state
+  };
 
   return (
     <Textarea
-      className="max-w-xs"
+      className="w-full md:w-96 lg:w-[600px]"
       isClearable
       label={label}
       placeholder={placeholder}
-      value={textAreaValue}
+      value={textAreaValue.replace(/\\n/g, "\n")} // Ensure newlines are rendered
+      onClear={handleClear}
     />
   );
 }

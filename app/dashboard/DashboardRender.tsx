@@ -49,6 +49,8 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
     }
   }
 
+  // console.log(deviceAddress);
+
   return (
     <div className="space-y-6">
       {layouts.map((layout, index) => {

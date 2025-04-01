@@ -4,10 +4,11 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@heroui/dropdown";
-// import type { Selection } from "@heroui/select";
 import { Button } from "@heroui/button";
 import { useMultiDropdownStore } from "@/config/zustand/DropdownKeys"; // Import the new Zustand store
-import { useEffect } from "react";
+import { SendCommands } from "@/stores/useSendCommandsStore";
+import { useOutputStore } from "@/config/zustand/OutputStore";
+import { useEffect, useState } from "react";
 
 interface DropdownItemProps {
   key: string;
@@ -18,6 +19,9 @@ interface DropdownMenuProps {
   dropdownID: string;
   items: DropdownItemProps[];
   initialSelectedItem: string;
+  deviceAddress: string;
+  deviceType: string;
+  deviceUID: string;
   title: string;
 }
 
@@ -25,28 +29,83 @@ export default function DashboardDropdown({
   dropdownID,
   items,
   initialSelectedItem,
+  deviceAddress,
+  deviceType,
+  deviceUID,
   title,
 }: DropdownMenuProps) {
+  const addOutput = useOutputStore((state) => state.addOutput);
+  const [submitted, setSubmitted] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const { dropdowns, setDropdownKeys } = useMultiDropdownStore(); // Use new Zustand store
   const dropdownSelectedKeys = dropdowns[dropdownID] || new Set();
-
-  useEffect(() => {
-    if (!dropdownSelectedKeys.size && initialSelectedItem) {
-      setDropdownKeys(dropdownID, new Set([initialSelectedItem]));
-    }
-  }, [dropdownID, initialSelectedItem, setDropdownKeys, dropdownSelectedKeys]);
 
   const selectedValue = Array.from(dropdownSelectedKeys)
     .join(", ")
     .replace(/_/g, "");
 
-  const handleSelectionChange = (keys: any) => {
-    setDropdownKeys(dropdownID, new Set(keys));
+  const set_wavelength = async (value: string, deviceAddress: string) => {
+    const data = {
+      address: deviceAddress,
+      command: `SENS:CORR:WAV ${value}`, // Command to set wavelength
+      noResponse: true,
+    };
+    try {
+      const result = await SendCommands({
+        address: data.address,
+        content: data.command,
+        deviceType: deviceType,
+      });
+
+      // addOutput(deviceUID, `Wavelength set result: ${JSON.stringify(result)}`);
+      checkwave_length(deviceAddress);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      addOutput(deviceUID + "|set_wavelength", JSON.stringify(err.message)); // Set output with error details
+    }
+
+    setSubmitted(data);
   };
 
-  // useEffect(() => {
-  //   console.log(`Dropdown ${dropdownID} value:`, selectedValue);
-  // }, [dropdownSelectedKeys, dropdownID, selectedValue]);
+  const checkwave_length = async (deviceAddress: string) => {
+    const data = {
+      address: deviceAddress,
+      command: `SENS:CORR:WAV?`, // Command to set wavelength
+    };
+    try {
+      const result = await SendCommands({
+        address: data.address,
+        content: data.command,
+        deviceType: deviceType,
+      });
+
+      addOutput(
+        deviceUID + "|check_wavelength",
+        `Wavelength set result: ${JSON.stringify(result)}`
+      );
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      addOutput(deviceUID + "|check_wavelength", JSON.stringify(err.message)); // Set output with error details
+    }
+
+    setSubmitted(data);
+  };
+
+  useEffect(() => {
+    if (!dropdownSelectedKeys.size && initialSelectedItem && deviceAddress) {
+      setDropdownKeys(dropdownID, new Set([initialSelectedItem]));
+      set_wavelength(initialSelectedItem, deviceAddress); // Set wavelength for initialSelectedItem
+    }
+  }, [dropdownID, initialSelectedItem, setDropdownKeys, dropdownSelectedKeys]);
+
+  const handleSelectionChange = (keys: any) => {
+    const newSelectedValue = Array.from(keys).join(", ").replace(/_/g, "");
+    setDropdownKeys(dropdownID, new Set(keys));
+    set_wavelength(newSelectedValue, deviceAddress); // Set wavelength for the newly selected value
+  };
 
   return (
     <div>

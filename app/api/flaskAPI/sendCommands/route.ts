@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const { address, content, deviceType } = body;
     const endpoint =
       deviceType === "pyvisa" ? "pyvisa_command" : "comport_command";
-    // console.log(deviceType);
+
     const payload =
       deviceType === "pyvisa"
         ? { address, command: content }
@@ -27,12 +27,20 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    return new NextResponse(JSON.stringify(response.data), { headers });
-  } catch (error) {
-    console.error("Error executing script:", error);
+    return new NextResponse(JSON.stringify(response.data.response), {
+      headers,
+    });
+  } catch (error: any) {
+    const errorMessage =
+      error.response?.data || error.message || "Unknown error occurred";
+    const errorStatus = error.response?.status || 500;
+
     return new NextResponse(
-      JSON.stringify({ error: "Error executing script" }),
-      { headers, status: 500 }
+      JSON.stringify({
+        error: "Error executing script",
+        details: errorMessage,
+      }),
+      { headers, status: errorStatus }
     );
   }
 }

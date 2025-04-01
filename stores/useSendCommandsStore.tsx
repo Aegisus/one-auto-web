@@ -1,7 +1,5 @@
-import { create } from "zustand";
-import useSWR, { mutate } from "swr";
+import { mutate } from "swr";
 import { env } from "@/env.mjs";
-import axios from "axios";
 
 // const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
@@ -9,7 +7,9 @@ export async function SendCommands(commands: {
   address: string;
   content: string;
   deviceType: string;
+  noResponse?: boolean;
 }) {
+  // console.log(commands.content);
   // to update local state based on key
   const response = await fetch(
     env.NEXT_PUBLIC_APP_URL + ":3000/api/flaskAPI/sendCommands",
@@ -31,6 +31,11 @@ export async function SendCommands(commands: {
     },
     false
   );
+
+  // If noResponse is true, return early without fetching the response
+  if (commands.noResponse) {
+    return { success: true }; // Return a simple success object
+  }
 
   if (!response.ok) {
     throw new Error("Network response was not ok");
