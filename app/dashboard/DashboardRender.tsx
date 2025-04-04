@@ -85,7 +85,7 @@ const DashboardRenderer: React.FC<{ layouts: any[] }> = ({ layouts }) => {
                           defaultValue={component.defaultValue}
                           placeholder={component.placeholder}
                           title={component.title}
-                          function={component.function}
+                          exeFunction={component.exeFunction}
                           dropdownID={component.dropdownID}
                           outputID={component.outputID}
                           dataSource={component.dataSource}
