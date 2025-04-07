@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useDeviceExecutionStore } from "@/stores/useDeviceFunctionGetStore";
 import { executeFunctionSteps } from "@/lib/executeFunctionHelper";
 import { useOutputStore } from "@/config/zustand/OutputStore";
+import { useSwitchStateStore } from "@/config/zustand/SwitchKeys";
 
 interface DashboardSwitchProps {
   switchLabel: string;
@@ -10,6 +11,7 @@ interface DashboardSwitchProps {
   deviceUID: string;
   deviceType: string;
   exeFunction: string;
+  deviceAddress: string;
 }
 
 export default function DashboardSwitch({
@@ -18,9 +20,10 @@ export default function DashboardSwitch({
   deviceUID,
   deviceType,
   exeFunction,
+  deviceAddress,
 }: DashboardSwitchProps) {
-  const [isSelected, setIsSelected] = useState(defaultSelected);
-
+  // const [isSelected, setIsSelected] = useState(defaultSelected);
+  const { isSelected, setIsSelected } = useSwitchStateStore();
   // Access zustand store
   const { exeFunctions, fetchDeviceExeFunctions, setDeviceUID } =
     useDeviceExecutionStore();
@@ -34,8 +37,6 @@ export default function DashboardSwitch({
   const setError = (error: string | null) => {
     if (error) {
       console.error("Error:", error);
-    } else {
-      console.log("No errors.");
     }
   };
 
@@ -46,17 +47,28 @@ export default function DashboardSwitch({
   }, [deviceUID, setDeviceUID, fetchDeviceExeFunctions]);
 
   useEffect(() => {
-    if (isSelected) {
-      const func = exeFunctions[exeFunction];
-      if (func) {
-        // Log the entire function object to inspect its details
-        console.log(`Function details for ${exeFunction}:`, func);
-        // Execute the function
-        executeFunctionSteps(deviceUID, func, deviceType, addOutput, setError);
-      }
+    const func = exeFunctions[exeFunction];
+    if (func) {
+      // Log the entire function object to inspect its details
+      // console.log(`Function details for ${exeFunction}:`, func);
+      // console.log(isSelected);
+      // Execute the function
+      executeFunctionSteps(
+        deviceUID,
+        deviceAddress,
+        func,
+        deviceType,
+        setError
+      );
     }
-  }, [isSelected, exeFunctions, exeFunction, deviceUID, deviceType]);
-
+  }, [
+    isSelected,
+    exeFunctions,
+    exeFunction,
+    deviceUID,
+    deviceType,
+    deviceAddress,
+  ]);
   return (
     <Switch isSelected={isSelected} onChange={() => setIsSelected(!isSelected)}>
       {switchLabel}

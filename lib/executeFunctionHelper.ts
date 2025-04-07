@@ -3,6 +3,7 @@ import { useDeviceActionsStore } from "@/stores/useDeviceActionsStore";
 import { SendCommands } from "@/stores/useSendCommandsStore";
 import { useOutputStore } from "@/config/zustand/OutputStore";
 import { Step, FunctionDetails } from "@/lib/types"; // Import the shared type
+import { useSwitchStateStore } from "@/config/zustand/SwitchKeys";
 
 // interface Step {
 //   command?: string;
@@ -25,11 +26,13 @@ import { Step, FunctionDetails } from "@/lib/types"; // Import the shared type
 // }
 export const executeFunctionSteps = async (
   deviceUID: string,
+  deviceAddress: string,
   func: FunctionDetails,
   deviceType: string,
-  addOutput: (key: string, value: string) => void,
   setError: (error: string | null) => void
 ) => {
+  const addOutput = useOutputStore.getState().addOutput;
+
   if (!func || !func.steps || func.steps.length === 0) {
     console.error("Invalid function or steps are missing.");
     return;
@@ -71,7 +74,7 @@ export const executeFunctionSteps = async (
 
   // Extract all function keys from the `general` section
   const functionKeys = Object.keys(generalCommands);
-  console.log("Available functions in 'general':", functionKeys);
+  // console.log("Available functions in 'general':", functionKeys);
 
   // Helper to resolve a command from the `general` section
   const resolveCommand = (commandKey: string): string | null => {
@@ -85,10 +88,10 @@ export const executeFunctionSteps = async (
       // Handle simple commands
       const command = resolveCommand(step.command);
       if (command) {
-        console.log(`Step ${index + 1}: Executing command "${command}"`);
+        // console.log(`Step ${index + 1}: Executing command "${command}"`);
         try {
           const result = await SendCommands({
-            address: deviceUID,
+            address: deviceAddress,
             content: command,
             deviceType,
           });
@@ -119,16 +122,16 @@ export const executeFunctionSteps = async (
           );
           continue;
         }
-        console.log(
-          `Step ${index + 1}: Starting periodic loop with interval ${loop.interval}ms`
-        );
+        // console.log(
+        //   `Step ${index + 1}: Starting periodic loop with interval ${loop.interval}ms`
+        // );
         await executePeriodicLoop(
           loop.command,
           loop.interval,
           resolveCommand,
+          deviceAddress,
           deviceUID,
           deviceType,
-          addOutput,
           setError
         );
       } else if (
@@ -147,9 +150,9 @@ export const executeFunctionSteps = async (
         await executeRampLoop(
           loop,
           resolveCommand,
+          deviceAddress,
           deviceUID,
           deviceType,
-          addOutput,
           setError
         );
       } else {
@@ -166,11 +169,13 @@ const executePeriodicLoop = async (
   commandKey: string,
   interval: number,
   resolveCommand: (commandKey: string) => string | null,
+  deviceAddress: string,
   deviceUID: string,
   deviceType: string,
-  addOutput: (key: string, value: string) => void,
   setError: (error: string | null) => void
 ) => {
+  const addOutput = useOutputStore.getState().addOutput;
+
   if (!commandKey) {
     console.error("Periodic loop is missing a command.");
     return;
@@ -182,23 +187,16 @@ const executePeriodicLoop = async (
     return;
   }
 
-  console.log(
-    `Executing periodic loop for command "${command}" every ${interval}ms`
-  );
-
-  const stopAfter = 10000; // Stop after 10 seconds for simulation
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < stopAfter) {
-    const data = {
-      address: deviceUID,
-      command,
-    };
-
+  const loop = async () => {
+    const { isSelected } = useSwitchStateStore.getState();
+    if (isSelected == false) {
+      return; // Exit the loop if isSelected is false
+    }
+    console.log(commandKey);
     try {
       const result = await SendCommands({
-        address: data.address,
-        content: data.command,
+        address: deviceAddress,
+        content: command,
         deviceType,
       });
 
@@ -213,21 +211,27 @@ const executePeriodicLoop = async (
       addOutput(deviceUID + `|${commandKey}_err`, JSON.stringify(errorOutput));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, interval));
-  }
+    // Schedule the next iteration only if isSelected is still true
+    if (isSelected == true) {
+      setTimeout(loop, interval);
+    }
+  };
 
-  console.log("Periodic loop execution completed.");
+  // Start the loop
+  loop();
 };
 
 // Handle ramp loops (for-like)
 const executeRampLoop = async (
   loop: Step["loop"],
   resolveCommand: (commandKey: string) => string | null,
+  deviceAddress: string,
   deviceUID: string,
   deviceType: string,
-  addOutput: (key: string, value: string) => void,
   setError: (error: string | null) => void
 ) => {
+  const addOutput = useOutputStore.getState().addOutput;
+
   if (!loop || !loop.command) {
     console.error("Ramp loop is missing a command.");
     return;
@@ -252,7 +256,7 @@ const executeRampLoop = async (
   for (let value = start; value <= end; value += step) {
     const command = commandTemplate.replace("{value}", value.toString());
     const data = {
-      address: deviceUID,
+      address: deviceAddress,
       command,
     };
 
