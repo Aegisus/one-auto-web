@@ -9,6 +9,8 @@ import { useMultiDropdownStore } from "@/config/zustand/DropdownKeys"; // Import
 import { SendCommands } from "@/stores/useSendCommandsStore";
 import { useOutputStore } from "@/config/zustand/OutputStore";
 import { useEffect, useState } from "react";
+import { executeFunctionSteps } from "@/lib/executeFunctionHelper";
+import { useDeviceExecutionStore } from "@/stores/useDeviceFunctionGetStore";
 
 interface DropdownItemProps {
   key: string;
@@ -23,6 +25,7 @@ interface DropdownMenuProps {
   deviceType: string;
   deviceUID: string;
   title: string;
+  layoutExeFunction: string;
 }
 
 export default function DashboardDropdown({
@@ -33,9 +36,9 @@ export default function DashboardDropdown({
   deviceType,
   deviceUID,
   title,
+  layoutExeFunction,
 }: DropdownMenuProps) {
   const addOutput = useOutputStore((state) => state.addOutput);
-  const [submitted, setSubmitted] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { dropdowns, setDropdownKeys } = useMultiDropdownStore(); // Use new Zustand store
@@ -45,54 +48,74 @@ export default function DashboardDropdown({
     .join(", ")
     .replace(/_/g, "");
 
-  const set_wavelength = async (value: string, deviceAddress: string) => {
-    const data = {
-      address: deviceAddress,
-      command: `SENS:CORR:WAV ${value}`, // Command to set wavelength
-      noResponse: true,
-    };
-    try {
-      const result = await SendCommands({
-        address: data.address,
-        content: data.command,
-        deviceType: deviceType,
-      });
+  // Access store
+  const { exeFunctions, fetchDeviceExeFunctions, setDeviceUID } =
+    useDeviceExecutionStore();
 
+  // Set the deviceUID in the zustand store when the component mounts or updates
+  useEffect(() => {
+    setDeviceUID(deviceUID);
+    fetchDeviceExeFunctions();
+  }, [deviceUID, setDeviceUID, fetchDeviceExeFunctions]);
+
+  const set_wavelength = async (value: string, deviceAddress: string) => {
+    try {
+      const func = exeFunctions[layoutExeFunction];
+      if (func) {
+        executeFunctionSteps(
+          deviceUID,
+          deviceAddress,
+          func,
+          deviceType,
+          setError,
+          value
+        );
+      } else {
+        console.log(
+          "Cannnot find function. Layout exeFunction: " + layoutExeFunction
+        );
+      }
       // addOutput(deviceUID, `Wavelength set result: ${JSON.stringify(result)}`);
-      checkwave_length(deviceAddress);
+      // checkwave_length(deviceAddress);
       setError(null);
     } catch (err: any) {
       setError(err.message);
       addOutput(deviceUID + "|set_wavelength", JSON.stringify(err.message)); // Set output with error details
     }
-
-    setSubmitted(data);
   };
 
-  const checkwave_length = async (deviceAddress: string) => {
-    const data = {
-      address: deviceAddress,
-      command: `SENS:CORR:WAV?`, // Command to set wavelength
-    };
-    try {
-      const result = await SendCommands({
-        address: data.address,
-        content: data.command,
-        deviceType: deviceType,
-      });
+  // const checkwave_length = async (deviceAddress: string) => {
+  //   const data = {
+  //     address: deviceAddress,
+  //     command: `SENS:CORR:WAV?`, // Command to set wavelength
+  //   };
+  //   try {
 
-      addOutput(
-        deviceUID + "|check_wavelength",
-        `Wavelength set result: ${JSON.stringify(result)}`
-      );
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-      addOutput(deviceUID + "|check_wavelength", JSON.stringify(err.message)); // Set output with error details
-    }
+  //     const func = exeFunctions[layoutExeFunction];
+  //     if (func) {
+  //       executeFunctionSteps(
+  //         deviceUID,
+  //         deviceAddress,
+  //         func,
+  //         deviceType,
+  //         setError
+  //       );
+  //     } else {
+  //       console.log(
+  //         "Cannnot find function. Layout exeFunction: " + layoutExeFunction
+  //       );
+  //     }
 
-    setSubmitted(data);
-  };
+  //     addOutput(
+  //       deviceUID + "|check_wavelength",
+  //       `Wavelength set result: ${JSON.stringify(result)}`
+  //     );
+  //     setError(null);
+  //   } catch (err: any) {
+  //     setError(err.message);
+  //     addOutput(deviceUID + "|check_wavelength", JSON.stringify(err.message)); // Set output with error details
+  //   }
+  // };
 
   useEffect(() => {
     if (!dropdownSelectedKeys.size && initialSelectedItem && deviceAddress) {

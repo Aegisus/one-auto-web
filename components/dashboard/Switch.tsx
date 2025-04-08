@@ -1,8 +1,7 @@
 import { Switch } from "@heroui/switch";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useDeviceExecutionStore } from "@/stores/useDeviceFunctionGetStore";
 import { executeFunctionSteps } from "@/lib/executeFunctionHelper";
-import { useOutputStore } from "@/config/zustand/OutputStore";
 import { useSwitchStateStore } from "@/config/zustand/SwitchKeys";
 
 interface DashboardSwitchProps {
@@ -10,7 +9,7 @@ interface DashboardSwitchProps {
   defaultSelected: boolean;
   deviceUID: string;
   deviceType: string;
-  exeFunction: string;
+  layoutExeFunction: string;
   deviceAddress: string;
 }
 
@@ -19,19 +18,14 @@ export default function DashboardSwitch({
   defaultSelected,
   deviceUID,
   deviceType,
-  exeFunction,
+  layoutExeFunction,
   deviceAddress,
 }: DashboardSwitchProps) {
   // const [isSelected, setIsSelected] = useState(defaultSelected);
   const { isSelected, setIsSelected } = useSwitchStateStore();
-  // Access zustand store
+  // Access store
   const { exeFunctions, fetchDeviceExeFunctions, setDeviceUID } =
     useDeviceExecutionStore();
-
-  // Function to handle output
-  const addOutput = (key: string, value: string) => {
-    console.log(`Output [${key}]:`, value);
-  };
 
   // Function to handle errors
   const setError = (error: string | null) => {
@@ -40,19 +34,16 @@ export default function DashboardSwitch({
     }
   };
 
+  // Set the deviceUID in the zustand store when the component mounts or updates
   useEffect(() => {
-    // Set the deviceUID in the zustand store when the component mounts or updates
     setDeviceUID(deviceUID);
     fetchDeviceExeFunctions();
   }, [deviceUID, setDeviceUID, fetchDeviceExeFunctions]);
 
+  // Execute the function
   useEffect(() => {
-    const func = exeFunctions[exeFunction];
+    const func = exeFunctions[layoutExeFunction];
     if (func) {
-      // Log the entire function object to inspect its details
-      // console.log(`Function details for ${exeFunction}:`, func);
-      // console.log(isSelected);
-      // Execute the function
       executeFunctionSteps(
         deviceUID,
         deviceAddress,
@@ -60,17 +51,26 @@ export default function DashboardSwitch({
         deviceType,
         setError
       );
+    } else {
+      console.log(
+        "Cannnot find function. Layout exeFunction: " + layoutExeFunction
+      );
     }
   }, [
     isSelected,
     exeFunctions,
-    exeFunction,
+    layoutExeFunction,
     deviceUID,
     deviceType,
     deviceAddress,
   ]);
+
   return (
-    <Switch isSelected={isSelected} onChange={() => setIsSelected(!isSelected)}>
+    <Switch
+      isSelected={isSelected}
+      onChange={() => setIsSelected(!isSelected)}
+      defaultChecked={defaultSelected}
+    >
       {switchLabel}
     </Switch>
   );

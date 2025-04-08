@@ -27,7 +27,6 @@ export const useDeviceExecutionStore = create<DeviceStore>((set, get) => {
     const exeFunctions: Record<string, FunctionDetails> = {};
 
     if (!deviceUID) return; // If no deviceUID is set, do nothing
-
     // deviceActions.forEach((action) => {
     //   if (action.uid === deviceUID) {
     //     action.functions?.forEach((func) => {

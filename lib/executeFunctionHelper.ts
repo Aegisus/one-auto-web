@@ -24,12 +24,14 @@ import { useSwitchStateStore } from "@/config/zustand/SwitchKeys";
 //   parameters?: Record<string, any>;
 //   description?: string;
 // }
+
 export const executeFunctionSteps = async (
   deviceUID: string,
   deviceAddress: string,
   func: FunctionDetails,
   deviceType: string,
-  setError: (error: string | null) => void
+  setError: (error: string | null) => void,
+  value: string = ""
 ) => {
   const addOutput = useOutputStore.getState().addOutput;
 
@@ -76,38 +78,65 @@ export const executeFunctionSteps = async (
   const functionKeys = Object.keys(generalCommands);
   // console.log("Available functions in 'general':", functionKeys);
 
+  // Overload signatures
+  function resolveCommand(
+    commandKey: string,
+    singleCommand: true
+  ): string | null;
+  function resolveCommand(
+    commandKey: string,
+    singleCommand?: false
+  ): string[] | null;
+
   // Helper to resolve a command from the `general` section
-  const resolveCommand = (commandKey: string): string | null => {
-    return generalCommands[commandKey] || null;
-  };
+  function resolveCommand(
+    commandKey: string,
+    singleCommand = false
+  ): string | string[] | null {
+    if (!generalCommands) {
+      console.error("The 'general' section is missing or invalid in commands.");
+      return "";
+    }
+    const command = generalCommands[commandKey] || null;
+    if (!command) return null;
+
+    // Split the command by "|" to handle chaining
+    const commands = command.split("|").map((cmd) => {
+      if (cmd.includes("{value}")) {
+        return cmd.replace("{value}", value); // Replace {value} with the provided value
+      }
+      return cmd;
+    });
+
+    return singleCommand ? commands[0] || null : commands;
+  }
 
   // Process each step in the function
   for (let index = 0; index < func.steps.length; index++) {
     const step = func.steps[index];
     if (step.command) {
-      // Handle simple commands
-      const command = resolveCommand(step.command);
-      if (command) {
-        // console.log(`Step ${index + 1}: Executing command "${command}"`);
-        try {
-          const result = await SendCommands({
-            address: deviceAddress,
-            content: command,
-            deviceType,
-          });
+      // Handle simple or chained commands
+      const commands = resolveCommand(step.command);
+      if (commands) {
+        const commandArray = Array.isArray(commands) ? commands : [commands]; // Ensure commands is an array
+        for (const cmd of commandArray) {
+          try {
+            const result = await SendCommands({
+              address: deviceAddress,
+              content: cmd,
+              deviceType,
+            });
 
-          addOutput(deviceUID + `|${step.command}`, JSON.stringify(result));
-          setError(null);
-        } catch (err: any) {
-          const errorOutput = {
-            error: true,
-            message: err.message,
-          };
-          setError(err.message);
-          addOutput(
-            deviceUID + `|${step.command}_err`,
-            JSON.stringify(errorOutput)
-          );
+            addOutput(deviceUID + `|${cmd}`, JSON.stringify(result));
+            setError(null);
+          } catch (err: any) {
+            const errorOutput = {
+              error: true,
+              message: err.message,
+            };
+            setError(err.message);
+            addOutput(deviceUID + `|${cmd}_err`, JSON.stringify(errorOutput));
+          }
         }
       } else {
         console.error(`Command "${step.command}" not found.`);
@@ -149,7 +178,7 @@ export const executeFunctionSteps = async (
         );
         await executeRampLoop(
           loop,
-          resolveCommand,
+          (key) => resolveCommand(key, true) as string | null,
           deviceAddress,
           deviceUID,
           deviceType,
@@ -168,7 +197,7 @@ export const executeFunctionSteps = async (
 const executePeriodicLoop = async (
   commandKey: string,
   interval: number,
-  resolveCommand: (commandKey: string) => string | null,
+  resolveCommand: (commandKey: string, singleCommand: true) => string | null, // Updated type
   deviceAddress: string,
   deviceUID: string,
   deviceType: string,
@@ -181,7 +210,7 @@ const executePeriodicLoop = async (
     return;
   }
 
-  const command = resolveCommand(commandKey);
+  const command = resolveCommand(commandKey, true); // Explicitly set singleCommand: true
   if (!command) {
     console.error(`Command "${commandKey}" not found.`);
     return;
@@ -189,7 +218,7 @@ const executePeriodicLoop = async (
 
   const loop = async () => {
     const { isSelected } = useSwitchStateStore.getState();
-    if (isSelected == false) {
+    if (!isSelected) {
       return; // Exit the loop if isSelected is false
     }
     console.log(commandKey);
@@ -212,7 +241,7 @@ const executePeriodicLoop = async (
     }
 
     // Schedule the next iteration only if isSelected is still true
-    if (isSelected == true) {
+    if (isSelected) {
       setTimeout(loop, interval);
     }
   };
@@ -224,7 +253,7 @@ const executePeriodicLoop = async (
 // Handle ramp loops (for-like)
 const executeRampLoop = async (
   loop: Step["loop"],
-  resolveCommand: (commandKey: string) => string | null,
+  resolveCommand: (commandKey: string, singleCommand: boolean) => string | null,
   deviceAddress: string,
   deviceUID: string,
   deviceType: string,
@@ -237,7 +266,7 @@ const executeRampLoop = async (
     return;
   }
 
-  const commandTemplate = resolveCommand(loop.command);
+  const commandTemplate = resolveCommand(loop.command, true); // Get only the first command
   if (!commandTemplate) {
     console.error(`Command "${loop.command}" not found.`);
     return;
@@ -255,15 +284,10 @@ const executeRampLoop = async (
 
   for (let value = start; value <= end; value += step) {
     const command = commandTemplate.replace("{value}", value.toString());
-    const data = {
-      address: deviceAddress,
-      command,
-    };
-
     try {
       const result = await SendCommands({
-        address: data.address,
-        content: data.command,
+        address: deviceAddress,
+        content: command,
         deviceType,
       });
 
